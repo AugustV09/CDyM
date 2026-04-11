@@ -20,5 +20,5 @@ void NeoPixelRotarSalidaVerdes(volatile uint8_t *port, uint8_t pin)
     // Ya calculados los envia
     NeoPixelSendColorArray(port, pin, colores, TOTAL_LEDS_NEOPIXEL);
 
-    pos_verde = (pos_verde + 1) % TOTAL_LEDS_NEOPIXEL;
+    pos_verde = (pos_verde + TOTAL_LEDS_NEOPIXEL - 1) % TOTAL_LEDS_NEOPIXEL;
 }

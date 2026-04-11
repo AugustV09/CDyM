@@ -12,8 +12,8 @@ void NeoPixelRotarRojoAzul(volatile uint8_t *port, uint8_t pin)
         uint8_t esImpar = i & 1;
 
         uint8_t g = 0;
-        uint8_t r = (!rojosPrendidos && !esImpar) ? 255 : 0; // Rojos en pares
-        uint8_t b = (rojosPrendidos && esImpar) ? 255 : 0;   // Azules en impares
+        uint8_t r = (!rojosPrendidos && esImpar) ? 255 : 0; // Rojos en pares
+        uint8_t b = (rojosPrendidos && !esImpar) ? 255 : 0;   // Azules en impares
 
         colores[i * 3 + 0] = g; // G
         colores[i * 3 + 1] = r; // R
