@@ -120,9 +120,60 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Definitions.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio1\IncisoA.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio1\IncisoA.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio1\IncisoB.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio1\IncisoB.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio3\IncisoC.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio3\IncisoC.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio3\IncisoD.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Ejercicio3\IncisoD.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HelpersMain\LectorBotones.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HelpersMain\Setup.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="HelpersMain\Setup.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="utils\AtmegaThings.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="utils\NeoPixelUtils.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="utils\NeoPixelUtils.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="HelpersMain" />
+    <Folder Include="Ejercicio3" />
+    <Folder Include="Ejercicio1" />
+    <Folder Include="utils" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
