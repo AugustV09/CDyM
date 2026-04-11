@@ -3,31 +3,31 @@ TP1.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  000005e0  2**0
+  0 .data         00000000  00800100  00800100  0000052c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         0000056c  00000000  00000000  00000074  2**1
+  1 .text         000004b8  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000003  00800100  00800100  000005e0  2**0
+  2 .bss          00000003  00800100  00800100  0000052c  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  000005e0  2**0
+  3 .comment      00000030  00000000  00000000  0000052c  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000610  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  0000055c  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 000000e0  00000000  00000000  00000650  2**0
+  5 .debug_aranges 000000e0  00000000  00000000  0000059c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000e91  00000000  00000000  00000730  2**0
+  6 .debug_info   00000e42  00000000  00000000  0000067c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000b03  00000000  00000000  000015c1  2**0
+  7 .debug_abbrev 00000b0c  00000000  00000000  000014be  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00000ab4  00000000  00000000  000020c4  2**0
+  8 .debug_line   00000a65  00000000  00000000  00001fca  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  0000014c  00000000  00000000  00002b78  2**2
+  9 .debug_frame  0000014c  00000000  00000000  00002a30  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000005a2  00000000  00000000  00002cc4  2**0
+ 10 .debug_str    000005a2  00000000  00000000  00002b7c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    000005f5  00000000  00000000  00003266  2**0
+ 11 .debug_loc    00000686  00000000  00000000  0000311e  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000070  00000000  00000000  0000385b  2**0
+ 12 .debug_ranges 000000b8  00000000  00000000  000037a4  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -81,8 +81,8 @@ Disassembly of section .text:
   7e:	a3 30       	cpi	r26, 0x03	; 3
   80:	b2 07       	cpc	r27, r18
   82:	e1 f7       	brne	.-8      	; 0x7c <.do_clear_bss_loop>
-  84:	0e 94 27 01 	call	0x24e	; 0x24e <main>
-  88:	0c 94 b4 02 	jmp	0x568	; 0x568 <_exit>
+  84:	0e 94 dc 00 	call	0x1b8	; 0x1b8 <main>
+  88:	0c 94 5a 02 	jmp	0x4b4	; 0x4b4 <_exit>
 
 0000008c <__bad_interrupt>:
   8c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
@@ -96,841 +96,780 @@ void LEDsRotar(volatile uint8_t *port)
 
     if (*port & (1 << (TOTAL_LEDS_INDIVIDUALES - 1)))
   92:	80 81       	ld	r24, Z
-  94:	88 23       	and	r24, r24
-  96:	1c f4       	brge	.+6      	; 0x9e <LEDsRotar+0xe>
+  94:	87 ff       	sbrs	r24, 7
+  96:	02 c0       	rjmp	.+4      	; 0x9c <LEDsRotar+0xc>
     {
         *port = 1;
   98:	81 e0       	ldi	r24, 0x01	; 1
-  9a:	80 83       	st	Z, r24
-  9c:	08 95       	ret
+  9a:	02 c0       	rjmp	.+4      	; 0xa0 <LEDsRotar+0x10>
     }
 
     else
         *port <<= 1;
-  9e:	80 81       	ld	r24, Z
-  a0:	88 0f       	add	r24, r24
-  a2:	80 83       	st	Z, r24
-  a4:	08 95       	ret
+  9c:	80 81       	ld	r24, Z
+  9e:	88 0f       	add	r24, r24
+  a0:	80 83       	st	Z, r24
+  a2:	08 95       	ret
 
-000000a6 <LEDsRebote>:
+000000a4 <LEDsRebote>:
 #include "IncisoB.h"
 
 void LEDsRebote(volatile uint8_t *port)
 {
-  a6:	fc 01       	movw	r30, r24
+  a4:	fc 01       	movw	r30, r24
     static uint8_t moviendoIzquierda = 0;
 
     // 1. Decidir dirección antes de mover
     if (*port & (1 << (TOTAL_LEDS_INDIVIDUALES - 1)))
-  a8:	80 81       	ld	r24, Z
-  aa:	88 23       	and	r24, r24
-  ac:	1c f4       	brge	.+6      	; 0xb4 <LEDsRebote+0xe>
+  a6:	80 81       	ld	r24, Z
+  a8:	87 ff       	sbrs	r24, 7
+  aa:	03 c0       	rjmp	.+6      	; 0xb2 <LEDsRebote+0xe>
     {
         moviendoIzquierda = 0;
-  ae:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__DATA_REGION_ORIGIN__>
-  b2:	06 c0       	rjmp	.+12     	; 0xc0 <LEDsRebote+0x1a>
+  ac:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__DATA_REGION_ORIGIN__>
+  b0:	06 c0       	rjmp	.+12     	; 0xbe <LEDsRebote+0x1a>
     }
     else if (*port & 1)
-  b4:	80 81       	ld	r24, Z
-  b6:	80 ff       	sbrs	r24, 0
-  b8:	03 c0       	rjmp	.+6      	; 0xc0 <LEDsRebote+0x1a>
+  b2:	80 81       	ld	r24, Z
+  b4:	80 ff       	sbrs	r24, 0
+  b6:	03 c0       	rjmp	.+6      	; 0xbe <LEDsRebote+0x1a>
     {
         moviendoIzquierda = 1;
-  ba:	81 e0       	ldi	r24, 0x01	; 1
-  bc:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
+  b8:	81 e0       	ldi	r24, 0x01	; 1
+  ba:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__DATA_REGION_ORIGIN__>
     }
 
     // 2. Ejecutar el movimiento
     if (moviendoIzquierda)
-  c0:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
-  c4:	88 23       	and	r24, r24
-  c6:	21 f0       	breq	.+8      	; 0xd0 <LEDsRebote+0x2a>
+  be:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
+  c2:	88 23       	and	r24, r24
+  c4:	19 f0       	breq	.+6      	; 0xcc <LEDsRebote+0x28>
     {
         *port <<= 1;
-  c8:	80 81       	ld	r24, Z
-  ca:	88 0f       	add	r24, r24
-  cc:	80 83       	st	Z, r24
-  ce:	08 95       	ret
+  c6:	80 81       	ld	r24, Z
+  c8:	88 0f       	add	r24, r24
+  ca:	02 c0       	rjmp	.+4      	; 0xd0 <LEDsRebote+0x2c>
     }
     else
     {
         *port >>= 1;
-  d0:	80 81       	ld	r24, Z
-  d2:	86 95       	lsr	r24
-  d4:	80 83       	st	Z, r24
-  d6:	08 95       	ret
+  cc:	80 81       	ld	r24, Z
+  ce:	86 95       	lsr	r24
+  d0:	80 83       	st	Z, r24
+  d2:	08 95       	ret
 
-000000d8 <NeoPixelRotarRojoAzul>:
+000000d4 <NeoPixelRotarRojoAzul>:
 #include "IncisoC.h"
 
 void NeoPixelRotarRojoAzul(volatile uint8_t *port, uint8_t pin)
 {
-  d8:	0f 93       	push	r16
-  da:	1f 93       	push	r17
-  dc:	cf 93       	push	r28
-  de:	df 93       	push	r29
-  e0:	cd b7       	in	r28, 0x3d	; 61
-  e2:	de b7       	in	r29, 0x3e	; 62
-  e4:	68 97       	sbiw	r28, 0x18	; 24
-  e6:	0f b6       	in	r0, 0x3f	; 63
-  e8:	f8 94       	cli
-  ea:	de bf       	out	0x3e, r29	; 62
-  ec:	0f be       	out	0x3f, r0	; 63
-  ee:	cd bf       	out	0x3d, r28	; 61
-  f0:	dc 01       	movw	r26, r24
-    static uint8_t rojosPrendidos = 0;
-
-    uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
-
-    //Calcula los colores
+  d4:	cf 93       	push	r28
+  d6:	df 93       	push	r29
+  d8:	cd b7       	in	r28, 0x3d	; 61
+  da:	de b7       	in	r29, 0x3e	; 62
+  dc:	68 97       	sbiw	r28, 0x18	; 24
+  de:	0f b6       	in	r0, 0x3f	; 63
+  e0:	f8 94       	cli
+  e2:	de bf       	out	0x3e, r29	; 62
+  e4:	0f be       	out	0x3f, r0	; 63
+  e6:	cd bf       	out	0x3d, r28	; 61
+  e8:	dc 01       	movw	r26, r24
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
-  f2:	90 e0       	ldi	r25, 0x00	; 0
-  f4:	33 c0       	rjmp	.+102    	; 0x15c <NeoPixelRotarRojoAzul+0x84>
     {
         uint8_t esImpar = i & 1;
-  f6:	89 2f       	mov	r24, r25
-  f8:	81 70       	andi	r24, 0x01	; 1
 
         uint8_t g = 0;
-        uint8_t r = (!rojosPrendidos && !esImpar) ? 255 : 0; // Rojos en pares
-  fa:	20 91 01 01 	lds	r18, 0x0101	; 0x800101 <rojosPrendidos.1740>
-  fe:	21 11       	cpse	r18, r1
- 100:	04 c0       	rjmp	.+8      	; 0x10a <NeoPixelRotarRojoAzul+0x32>
- 102:	88 23       	and	r24, r24
- 104:	21 f0       	breq	.+8      	; 0x10e <NeoPixelRotarRojoAzul+0x36>
- 106:	40 e0       	ldi	r20, 0x00	; 0
- 108:	03 c0       	rjmp	.+6      	; 0x110 <NeoPixelRotarRojoAzul+0x38>
- 10a:	40 e0       	ldi	r20, 0x00	; 0
- 10c:	01 c0       	rjmp	.+2      	; 0x110 <NeoPixelRotarRojoAzul+0x38>
- 10e:	4f ef       	ldi	r20, 0xFF	; 255
-        uint8_t b = (rojosPrendidos && esImpar) ? 255 : 0;   // Azules en impares
- 110:	22 23       	and	r18, r18
- 112:	19 f0       	breq	.+6      	; 0x11a <NeoPixelRotarRojoAzul+0x42>
- 114:	81 11       	cpse	r24, r1
- 116:	03 c0       	rjmp	.+6      	; 0x11e <NeoPixelRotarRojoAzul+0x46>
- 118:	03 c0       	rjmp	.+6      	; 0x120 <NeoPixelRotarRojoAzul+0x48>
- 11a:	80 e0       	ldi	r24, 0x00	; 0
- 11c:	01 c0       	rjmp	.+2      	; 0x120 <NeoPixelRotarRojoAzul+0x48>
- 11e:	8f ef       	ldi	r24, 0xFF	; 255
-
-        colores[i * 3 + 0] = g; // G
- 120:	29 2f       	mov	r18, r25
- 122:	30 e0       	ldi	r19, 0x00	; 0
- 124:	f9 01       	movw	r30, r18
- 126:	ee 0f       	add	r30, r30
- 128:	ff 1f       	adc	r31, r31
- 12a:	2e 0f       	add	r18, r30
- 12c:	3f 1f       	adc	r19, r31
- 12e:	e1 e0       	ldi	r30, 0x01	; 1
- 130:	f0 e0       	ldi	r31, 0x00	; 0
- 132:	ec 0f       	add	r30, r28
- 134:	fd 1f       	adc	r31, r29
- 136:	e2 0f       	add	r30, r18
- 138:	f3 1f       	adc	r31, r19
- 13a:	10 82       	st	Z, r1
-        colores[i * 3 + 1] = r; // R
- 13c:	f9 01       	movw	r30, r18
- 13e:	31 96       	adiw	r30, 0x01	; 1
- 140:	01 e0       	ldi	r16, 0x01	; 1
- 142:	10 e0       	ldi	r17, 0x00	; 0
- 144:	0c 0f       	add	r16, r28
- 146:	1d 1f       	adc	r17, r29
- 148:	e0 0f       	add	r30, r16
- 14a:	f1 1f       	adc	r31, r17
- 14c:	40 83       	st	Z, r20
-        colores[i * 3 + 2] = b; // B
- 14e:	2e 5f       	subi	r18, 0xFE	; 254
- 150:	3f 4f       	sbci	r19, 0xFF	; 255
- 152:	f8 01       	movw	r30, r16
- 154:	e2 0f       	add	r30, r18
- 156:	f3 1f       	adc	r31, r19
- 158:	80 83       	st	Z, r24
+        uint8_t r = (!rojosPrendidos && esImpar) ? 255 : 0; // Rojos en pares
+  ea:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <rojosPrendidos.1740>
+  ee:	fe 01       	movw	r30, r28
+  f0:	31 96       	adiw	r30, 0x01	; 1
     static uint8_t rojosPrendidos = 0;
 
     uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
 
     //Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
- 15a:	9f 5f       	subi	r25, 0xFF	; 255
- 15c:	98 30       	cpi	r25, 0x08	; 8
- 15e:	58 f2       	brcs	.-106    	; 0xf6 <NeoPixelRotarRojoAzul+0x1e>
+  f2:	20 e0       	ldi	r18, 0x00	; 0
+  f4:	af 01       	movw	r20, r30
+  f6:	71 e0       	ldi	r23, 0x01	; 1
+    {
+        uint8_t esImpar = i & 1;
+  f8:	92 2f       	mov	r25, r18
+  fa:	91 70       	andi	r25, 0x01	; 1
+
+        uint8_t g = 0;
+        uint8_t r = (!rojosPrendidos && esImpar) ? 255 : 0; // Rojos en pares
+  fc:	81 11       	cpse	r24, r1
+  fe:	04 c0       	rjmp	.+8      	; 0x108 <NeoPixelRotarRojoAzul+0x34>
+ 100:	39 2f       	mov	r19, r25
+ 102:	31 95       	neg	r19
+        uint8_t b = (rojosPrendidos && !esImpar) ? 255 : 0;   // Azules en impares
+ 104:	90 e0       	ldi	r25, 0x00	; 0
+ 106:	03 c0       	rjmp	.+6      	; 0x10e <NeoPixelRotarRojoAzul+0x3a>
+ 108:	97 27       	eor	r25, r23
+ 10a:	91 95       	neg	r25
+ 10c:	30 e0       	ldi	r19, 0x00	; 0
+
+        colores[i * 3 + 0] = g; // G
+ 10e:	10 82       	st	Z, r1
+        colores[i * 3 + 1] = r; // R
+ 110:	31 83       	std	Z+1, r19	; 0x01
+        colores[i * 3 + 2] = b; // B
+ 112:	92 83       	std	Z+2, r25	; 0x02
+    static uint8_t rojosPrendidos = 0;
+
+    uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
+
+    //Calcula los colores
+    for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
+ 114:	2f 5f       	subi	r18, 0xFF	; 255
+ 116:	33 96       	adiw	r30, 0x03	; 3
+ 118:	28 30       	cpi	r18, 0x08	; 8
+ 11a:	71 f7       	brne	.-36     	; 0xf8 <NeoPixelRotarRojoAzul+0x24>
         colores[i * 3 + 1] = r; // R
         colores[i * 3 + 2] = b; // B
     }
 
     //Ya calculados los envia
     NeoPixelSendColorArray(port, pin, colores, TOTAL_LEDS_NEOPIXEL);
- 160:	28 e0       	ldi	r18, 0x08	; 8
- 162:	ae 01       	movw	r20, r28
- 164:	4f 5f       	subi	r20, 0xFF	; 255
- 166:	5f 4f       	sbci	r21, 0xFF	; 255
- 168:	cd 01       	movw	r24, r26
- 16a:	0e 94 c7 01 	call	0x38e	; 0x38e <NeoPixelSendColorArray>
+ 11c:	cd 01       	movw	r24, r26
+ 11e:	0e 94 71 01 	call	0x2e2	; 0x2e2 <NeoPixelSendColorArray>
 
     rojosPrendidos = !rojosPrendidos;
- 16e:	81 e0       	ldi	r24, 0x01	; 1
- 170:	90 91 01 01 	lds	r25, 0x0101	; 0x800101 <rojosPrendidos.1740>
- 174:	91 11       	cpse	r25, r1
- 176:	80 e0       	ldi	r24, 0x00	; 0
- 178:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <rojosPrendidos.1740>
- 17c:	68 96       	adiw	r28, 0x18	; 24
- 17e:	0f b6       	in	r0, 0x3f	; 63
- 180:	f8 94       	cli
- 182:	de bf       	out	0x3e, r29	; 62
- 184:	0f be       	out	0x3f, r0	; 63
- 186:	cd bf       	out	0x3d, r28	; 61
- 188:	df 91       	pop	r29
- 18a:	cf 91       	pop	r28
- 18c:	1f 91       	pop	r17
- 18e:	0f 91       	pop	r16
- 190:	08 95       	ret
+ 122:	81 e0       	ldi	r24, 0x01	; 1
+ 124:	90 91 01 01 	lds	r25, 0x0101	; 0x800101 <rojosPrendidos.1740>
+ 128:	91 11       	cpse	r25, r1
+ 12a:	80 e0       	ldi	r24, 0x00	; 0
+ 12c:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <rojosPrendidos.1740>
+ 130:	68 96       	adiw	r28, 0x18	; 24
+ 132:	0f b6       	in	r0, 0x3f	; 63
+ 134:	f8 94       	cli
+ 136:	de bf       	out	0x3e, r29	; 62
+ 138:	0f be       	out	0x3f, r0	; 63
+ 13a:	cd bf       	out	0x3d, r28	; 61
+ 13c:	df 91       	pop	r29
+ 13e:	cf 91       	pop	r28
+ 140:	08 95       	ret
 
-00000192 <NeoPixelRotarSalidaVerdes>:
+00000142 <NeoPixelRotarSalidaVerdes>:
 #include "IncisoD.h"
 
 void NeoPixelRotarSalidaVerdes(volatile uint8_t *port, uint8_t pin)
 {
- 192:	cf 93       	push	r28
- 194:	df 93       	push	r29
- 196:	cd b7       	in	r28, 0x3d	; 61
- 198:	de b7       	in	r29, 0x3e	; 62
- 19a:	68 97       	sbiw	r28, 0x18	; 24
- 19c:	0f b6       	in	r0, 0x3f	; 63
- 19e:	f8 94       	cli
- 1a0:	de bf       	out	0x3e, r29	; 62
- 1a2:	0f be       	out	0x3f, r0	; 63
- 1a4:	cd bf       	out	0x3d, r28	; 61
- 1a6:	dc 01       	movw	r26, r24
+ 142:	cf 93       	push	r28
+ 144:	df 93       	push	r29
+ 146:	cd b7       	in	r28, 0x3d	; 61
+ 148:	de b7       	in	r29, 0x3e	; 62
+ 14a:	68 97       	sbiw	r28, 0x18	; 24
+ 14c:	0f b6       	in	r0, 0x3f	; 63
+ 14e:	f8 94       	cli
+ 150:	de bf       	out	0x3e, r29	; 62
+ 152:	0f be       	out	0x3f, r0	; 63
+ 154:	cd bf       	out	0x3d, r28	; 61
+ 156:	dc 01       	movw	r26, r24
+    uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
+
+    // Calcula los colores
+    for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
+    {
+        uint8_t g = (i == pos_verde) ? 255 : 0;
+ 158:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
+ 15c:	fe 01       	movw	r30, r28
+ 15e:	31 96       	adiw	r30, 0x01	; 1
     static uint8_t pos_verde = 0;
 
     uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
 
     // Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
- 1a8:	90 e0       	ldi	r25, 0x00	; 0
- 1aa:	25 c0       	rjmp	.+74     	; 0x1f6 <NeoPixelRotarSalidaVerdes+0x64>
+ 160:	90 e0       	ldi	r25, 0x00	; 0
+ 162:	af 01       	movw	r20, r30
     {
         uint8_t g = (i == pos_verde) ? 255 : 0;
- 1ac:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
- 1b0:	98 13       	cpse	r25, r24
- 1b2:	02 c0       	rjmp	.+4      	; 0x1b8 <NeoPixelRotarSalidaVerdes+0x26>
- 1b4:	8f ef       	ldi	r24, 0xFF	; 255
- 1b6:	01 c0       	rjmp	.+2      	; 0x1ba <NeoPixelRotarSalidaVerdes+0x28>
- 1b8:	80 e0       	ldi	r24, 0x00	; 0
         uint8_t r = 0;
         uint8_t b = 0;
         colores[i * 3 + 0] = g; // G
- 1ba:	29 2f       	mov	r18, r25
- 1bc:	30 e0       	ldi	r19, 0x00	; 0
- 1be:	a9 01       	movw	r20, r18
- 1c0:	44 0f       	add	r20, r20
- 1c2:	55 1f       	adc	r21, r21
- 1c4:	24 0f       	add	r18, r20
- 1c6:	35 1f       	adc	r19, r21
- 1c8:	e1 e0       	ldi	r30, 0x01	; 1
- 1ca:	f0 e0       	ldi	r31, 0x00	; 0
- 1cc:	ec 0f       	add	r30, r28
- 1ce:	fd 1f       	adc	r31, r29
- 1d0:	e2 0f       	add	r30, r18
- 1d2:	f3 1f       	adc	r31, r19
- 1d4:	80 83       	st	Z, r24
+ 164:	21 e0       	ldi	r18, 0x01	; 1
+ 166:	89 13       	cpse	r24, r25
+ 168:	20 e0       	ldi	r18, 0x00	; 0
+ 16a:	21 95       	neg	r18
+ 16c:	20 83       	st	Z, r18
         colores[i * 3 + 1] = r; // R
- 1d6:	f9 01       	movw	r30, r18
- 1d8:	31 96       	adiw	r30, 0x01	; 1
- 1da:	41 e0       	ldi	r20, 0x01	; 1
- 1dc:	50 e0       	ldi	r21, 0x00	; 0
- 1de:	4c 0f       	add	r20, r28
- 1e0:	5d 1f       	adc	r21, r29
- 1e2:	e4 0f       	add	r30, r20
- 1e4:	f5 1f       	adc	r31, r21
- 1e6:	10 82       	st	Z, r1
+ 16e:	11 82       	std	Z+1, r1	; 0x01
         colores[i * 3 + 2] = b; // B
- 1e8:	2e 5f       	subi	r18, 0xFE	; 254
- 1ea:	3f 4f       	sbci	r19, 0xFF	; 255
- 1ec:	fa 01       	movw	r30, r20
- 1ee:	e2 0f       	add	r30, r18
- 1f0:	f3 1f       	adc	r31, r19
- 1f2:	10 82       	st	Z, r1
+ 170:	12 82       	std	Z+2, r1	; 0x02
     static uint8_t pos_verde = 0;
 
     uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
 
     // Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
- 1f4:	9f 5f       	subi	r25, 0xFF	; 255
- 1f6:	98 30       	cpi	r25, 0x08	; 8
- 1f8:	c8 f2       	brcs	.-78     	; 0x1ac <NeoPixelRotarSalidaVerdes+0x1a>
+ 172:	9f 5f       	subi	r25, 0xFF	; 255
+ 174:	33 96       	adiw	r30, 0x03	; 3
+ 176:	98 30       	cpi	r25, 0x08	; 8
+ 178:	a9 f7       	brne	.-22     	; 0x164 <NeoPixelRotarSalidaVerdes+0x22>
         colores[i * 3 + 1] = r; // R
         colores[i * 3 + 2] = b; // B
     }
 
     // Ya calculados los envia
     NeoPixelSendColorArray(port, pin, colores, TOTAL_LEDS_NEOPIXEL);
- 1fa:	28 e0       	ldi	r18, 0x08	; 8
- 1fc:	ae 01       	movw	r20, r28
- 1fe:	4f 5f       	subi	r20, 0xFF	; 255
- 200:	5f 4f       	sbci	r21, 0xFF	; 255
- 202:	cd 01       	movw	r24, r26
- 204:	0e 94 c7 01 	call	0x38e	; 0x38e <NeoPixelSendColorArray>
+ 17a:	28 e0       	ldi	r18, 0x08	; 8
+ 17c:	cd 01       	movw	r24, r26
+ 17e:	0e 94 71 01 	call	0x2e2	; 0x2e2 <NeoPixelSendColorArray>
 
-    pos_verde = (pos_verde + 1) % TOTAL_LEDS_NEOPIXEL;
- 208:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
- 20c:	90 e0       	ldi	r25, 0x00	; 0
- 20e:	01 96       	adiw	r24, 0x01	; 1
- 210:	87 70       	andi	r24, 0x07	; 7
- 212:	90 78       	andi	r25, 0x80	; 128
- 214:	99 23       	and	r25, r25
- 216:	24 f4       	brge	.+8      	; 0x220 <NeoPixelRotarSalidaVerdes+0x8e>
- 218:	01 97       	sbiw	r24, 0x01	; 1
- 21a:	88 6f       	ori	r24, 0xF8	; 248
- 21c:	9f 6f       	ori	r25, 0xFF	; 255
- 21e:	01 96       	adiw	r24, 0x01	; 1
- 220:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <pos_verde.1740>
- 224:	68 96       	adiw	r28, 0x18	; 24
- 226:	0f b6       	in	r0, 0x3f	; 63
- 228:	f8 94       	cli
- 22a:	de bf       	out	0x3e, r29	; 62
- 22c:	0f be       	out	0x3f, r0	; 63
- 22e:	cd bf       	out	0x3d, r28	; 61
- 230:	df 91       	pop	r29
- 232:	cf 91       	pop	r28
- 234:	08 95       	ret
+    pos_verde = (pos_verde + TOTAL_LEDS_NEOPIXEL - 1) % TOTAL_LEDS_NEOPIXEL;
+ 182:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
+ 186:	90 e0       	ldi	r25, 0x00	; 0
+ 188:	07 96       	adiw	r24, 0x07	; 7
+ 18a:	87 70       	andi	r24, 0x07	; 7
+ 18c:	99 27       	eor	r25, r25
+ 18e:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <pos_verde.1740>
+ 192:	68 96       	adiw	r28, 0x18	; 24
+ 194:	0f b6       	in	r0, 0x3f	; 63
+ 196:	f8 94       	cli
+ 198:	de bf       	out	0x3e, r29	; 62
+ 19a:	0f be       	out	0x3f, r0	; 63
+ 19c:	cd bf       	out	0x3d, r28	; 61
+ 19e:	df 91       	pop	r29
+ 1a0:	cf 91       	pop	r28
+ 1a2:	08 95       	ret
 
-00000236 <configurarPuertos>:
+000001a4 <configurarPuertos>:
 
 
 void configurarPuertos()
 {
     // 1. Configurar LEDs individuales como salida
     ConfigPuertoLEDs = 0b11111111;
- 236:	8f ef       	ldi	r24, 0xFF	; 255
- 238:	8a b9       	out	0x0a, r24	; 10
+ 1a4:	8f ef       	ldi	r24, 0xFF	; 255
+ 1a6:	8a b9       	out	0x0a, r24	; 10
 
     // 2. Configurar NeoPixel como salida (bit 0)
     ConfigNeoPixel |= (1 << PORTB0);
- 23a:	84 b1       	in	r24, 0x04	; 4
- 23c:	81 60       	ori	r24, 0x01	; 1
- 23e:	84 b9       	out	0x04, r24	; 4
+ 1a8:	20 9a       	sbi	0x04, 0	; 4
 
     // 3. Configurar Pulsadores como entrada (bits 0 y 1)
     ConfigPulsadores &= ~((1 << PulsadorLeds) | (1 << PulsadorNeoPixel));
- 240:	87 b1       	in	r24, 0x07	; 7
- 242:	8c 7f       	andi	r24, 0xFC	; 252
- 244:	87 b9       	out	0x07, r24	; 7
+ 1aa:	87 b1       	in	r24, 0x07	; 7
+ 1ac:	8c 7f       	andi	r24, 0xFC	; 252
+ 1ae:	87 b9       	out	0x07, r24	; 7
 
     // 4. ACTIVAR PULL-UPS (Escribiendo 1 en el registro de Salida siendo entrada)
     PuertoPulsadoresSalida |= (1 << PulsadorLeds) | (1 << PulsadorNeoPixel);
- 246:	88 b1       	in	r24, 0x08	; 8
- 248:	83 60       	ori	r24, 0x03	; 3
- 24a:	88 b9       	out	0x08, r24	; 8
- 24c:	08 95       	ret
+ 1b0:	88 b1       	in	r24, 0x08	; 8
+ 1b2:	83 60       	ori	r24, 0x03	; 3
+ 1b4:	88 b9       	out	0x08, r24	; 8
+ 1b6:	08 95       	ret
 
-0000024e <main>:
+000001b8 <main>:
 #include "Ejercicio3/IncisoD.h"
 
 #include <stdint.h>
 
 int main(void)
 {
- 24e:	cf 93       	push	r28
- 250:	df 93       	push	r29
- 252:	00 d0       	rcall	.+0      	; 0x254 <main+0x6>
- 254:	00 d0       	rcall	.+0      	; 0x256 <main+0x8>
- 256:	00 d0       	rcall	.+0      	; 0x258 <main+0xa>
- 258:	cd b7       	in	r28, 0x3d	; 61
- 25a:	de b7       	in	r29, 0x3e	; 62
+ 1b8:	cf 93       	push	r28
+ 1ba:	df 93       	push	r29
+ 1bc:	00 d0       	rcall	.+0      	; 0x1be <main+0x6>
+ 1be:	00 d0       	rcall	.+0      	; 0x1c0 <main+0x8>
+ 1c0:	00 d0       	rcall	.+0      	; 0x1c2 <main+0xa>
+ 1c2:	cd b7       	in	r28, 0x3d	; 61
+ 1c4:	de b7       	in	r29, 0x3e	; 62
 
     configurarPuertos();
- 25c:	0e 94 1b 01 	call	0x236	; 0x236 <configurarPuertos>
+ 1c6:	0e 94 d2 00 	call	0x1a4	; 0x1a4 <configurarPuertos>
     // NeoPixel
     uint8_t seApretoBotonNeoPixel = 0;
     uint8_t cambiarPatronNeoPixel = 0;
     uint8_t NeoPixelPatronA = 0;
 
     PuertoLEDs = 0b00000001; // Un led al comienzo debe estar encendido
- 260:	81 e0       	ldi	r24, 0x01	; 1
- 262:	8b b9       	out	0x0b, r24	; 11
+ 1ca:	81 e0       	ldi	r24, 0x01	; 1
+ 1cc:	8b b9       	out	0x0b, r24	; 11
     uint8_t LEDsPatronA = 0;
 
     // NeoPixel
     uint8_t seApretoBotonNeoPixel = 0;
     uint8_t cambiarPatronNeoPixel = 0;
     uint8_t NeoPixelPatronA = 0;
- 264:	1c 82       	std	Y+4, r1	; 0x04
+ 1ce:	19 82       	std	Y+1, r1	; 0x01
     uint8_t cambiarPatronLeds = 0;
     uint8_t LEDsPatronA = 0;
 
     // NeoPixel
     uint8_t seApretoBotonNeoPixel = 0;
     uint8_t cambiarPatronNeoPixel = 0;
- 266:	1b 82       	std	Y+3, r1	; 0x03
+ 1d0:	41 2c       	mov	r4, r1
     uint8_t seApretoBotonLeds = 0;
     uint8_t cambiarPatronLeds = 0;
     uint8_t LEDsPatronA = 0;
 
     // NeoPixel
     uint8_t seApretoBotonNeoPixel = 0;
- 268:	91 2c       	mov	r9, r1
+ 1d2:	1b 82       	std	Y+3, r1	; 0x03
     uint64_t contadorCiclos = 0;
 
     // Leds
     uint8_t seApretoBotonLeds = 0;
     uint8_t cambiarPatronLeds = 0;
     uint8_t LEDsPatronA = 0;
- 26a:	1a 82       	std	Y+2, r1	; 0x02
-
-    uint64_t contadorCiclos = 0;
-
-    // Leds
-    uint8_t seApretoBotonLeds = 0;
-    uint8_t cambiarPatronLeds = 0;
- 26c:	19 82       	std	Y+1, r1	; 0x01
-    configurarPuertos();
-
-    uint64_t contadorCiclos = 0;
-
-    // Leds
-    uint8_t seApretoBotonLeds = 0;
- 26e:	1e 82       	std	Y+6, r1	; 0x06
+ 1d4:	51 2c       	mov	r5, r1
 int main(void)
 {
 
     configurarPuertos();
 
     uint64_t contadorCiclos = 0;
- 270:	1d 82       	std	Y+5, r1	; 0x05
- 272:	41 2c       	mov	r4, r1
- 274:	51 2c       	mov	r5, r1
- 276:	61 2c       	mov	r6, r1
- 278:	71 2c       	mov	r7, r1
- 27a:	81 2c       	mov	r8, r1
- 27c:	21 2c       	mov	r2, r1
- 27e:	31 2c       	mov	r3, r1
+ 1d6:	1d 82       	std	Y+5, r1	; 0x05
+ 1d8:	1a 82       	std	Y+2, r1	; 0x02
+ 1da:	91 2c       	mov	r9, r1
+ 1dc:	81 2c       	mov	r8, r1
+ 1de:	71 2c       	mov	r7, r1
+ 1e0:	61 2c       	mov	r6, r1
+ 1e2:	31 2c       	mov	r3, r1
+ 1e4:	21 2c       	mov	r2, r1
+
+    // Leds
+    uint8_t seApretoBotonLeds = 0;
+    uint8_t cambiarPatronLeds = 0;
+ 1e6:	1e 82       	std	Y+6, r1	; 0x06
     PuertoLEDs = 0b00000001; // Un led al comienzo debe estar encendido
 
     while (1)
     {
 
         detectarSoltado(estaPulsadoElBotonLeds(), seApretoBotonLeds, cambiarPatronLeds);
- 280:	2e 81       	ldd	r18, Y+6	; 0x06
- 282:	22 23       	and	r18, r18
- 284:	21 f0       	breq	.+8      	; 0x28e <main+0x40>
- 286:	30 9b       	sbis	0x06, 0	; 6
- 288:	02 c0       	rjmp	.+4      	; 0x28e <main+0x40>
- 28a:	81 e0       	ldi	r24, 0x01	; 1
- 28c:	89 83       	std	Y+1, r24	; 0x01
- 28e:	96 b1       	in	r25, 0x06	; 6
- 290:	81 e0       	ldi	r24, 0x01	; 1
- 292:	98 27       	eor	r25, r24
- 294:	91 70       	andi	r25, 0x01	; 1
- 296:	9e 83       	std	Y+6, r25	; 0x06
+ 1e8:	86 b1       	in	r24, 0x06	; 6
+ 1ea:	81 70       	andi	r24, 0x01	; 1
+ 1ec:	8c 83       	std	Y+4, r24	; 0x04
         detectarSoltado(estaPulsadoElBotonNeoPixel(), seApretoBotonNeoPixel, cambiarPatronNeoPixel);
- 298:	99 20       	and	r9, r9
- 29a:	21 f0       	breq	.+8      	; 0x2a4 <main+0x56>
- 29c:	31 9b       	sbis	0x06, 1	; 6
- 29e:	02 c0       	rjmp	.+4      	; 0x2a4 <main+0x56>
- 2a0:	21 e0       	ldi	r18, 0x01	; 1
- 2a2:	2b 83       	std	Y+3, r18	; 0x03
- 2a4:	96 b0       	in	r9, 0x06	; 6
- 2a6:	96 94       	lsr	r9
- 2a8:	81 e0       	ldi	r24, 0x01	; 1
- 2aa:	89 25       	eor	r24, r9
- 2ac:	81 70       	andi	r24, 0x01	; 1
- 2ae:	98 2e       	mov	r9, r24
+ 1ee:	8b 81       	ldd	r24, Y+3	; 0x03
+ 1f0:	88 23       	and	r24, r24
+ 1f2:	21 f0       	breq	.+8      	; 0x1fc <main+0x44>
+ 1f4:	31 9b       	sbis	0x06, 1	; 6
+ 1f6:	02 c0       	rjmp	.+4      	; 0x1fc <main+0x44>
+ 1f8:	44 24       	eor	r4, r4
+ 1fa:	43 94       	inc	r4
+ 1fc:	86 b1       	in	r24, 0x06	; 6
+ 1fe:	86 95       	lsr	r24
+ 200:	81 70       	andi	r24, 0x01	; 1
+ 202:	91 e0       	ldi	r25, 0x01	; 1
+ 204:	98 27       	eor	r25, r24
+ 206:	9b 83       	std	Y+3, r25	; 0x03
 
         if ((contadorCiclos % CiclosLeds) == 0)
- 2b0:	2d 81       	ldd	r18, Y+5	; 0x05
- 2b2:	23 70       	andi	r18, 0x03	; 3
- 2b4:	30 e0       	ldi	r19, 0x00	; 0
- 2b6:	40 e0       	ldi	r20, 0x00	; 0
- 2b8:	50 e0       	ldi	r21, 0x00	; 0
- 2ba:	60 e0       	ldi	r22, 0x00	; 0
- 2bc:	70 e0       	ldi	r23, 0x00	; 0
- 2be:	80 e0       	ldi	r24, 0x00	; 0
- 2c0:	90 e0       	ldi	r25, 0x00	; 0
- 2c2:	a0 e0       	ldi	r26, 0x00	; 0
- 2c4:	0e 94 a8 02 	call	0x550	; 0x550 <__cmpdi2_s8>
- 2c8:	a9 f4       	brne	.+42     	; 0x2f4 <main+0xa6>
+ 208:	2d 81       	ldd	r18, Y+5	; 0x05
+ 20a:	23 70       	andi	r18, 0x03	; 3
+ 20c:	30 e0       	ldi	r19, 0x00	; 0
+ 20e:	40 e0       	ldi	r20, 0x00	; 0
+ 210:	50 e0       	ldi	r21, 0x00	; 0
+ 212:	60 e0       	ldi	r22, 0x00	; 0
+ 214:	70 e0       	ldi	r23, 0x00	; 0
+ 216:	80 e0       	ldi	r24, 0x00	; 0
+ 218:	90 e0       	ldi	r25, 0x00	; 0
+ 21a:	a0 e0       	ldi	r26, 0x00	; 0
+ 21c:	0e 94 4e 02 	call	0x49c	; 0x49c <__cmpdi2_s8>
+ 220:	89 f4       	brne	.+34     	; 0x244 <main+0x8c>
         {
             if (cambiarPatronLeds)
- 2ca:	89 81       	ldd	r24, Y+1	; 0x01
- 2cc:	88 23       	and	r24, r24
- 2ce:	31 f0       	breq	.+12     	; 0x2dc <main+0x8e>
-            {
+ 222:	2e 81       	ldd	r18, Y+6	; 0x06
+ 224:	22 23       	and	r18, r18
+ 226:	11 f0       	breq	.+4      	; 0x22c <main+0x74>
+ 228:	81 e0       	ldi	r24, 0x01	; 1
+ 22a:	58 26       	eor	r5, r24
                 LEDsPatronA = !LEDsPatronA;
- 2d0:	81 e0       	ldi	r24, 0x01	; 1
- 2d2:	9a 81       	ldd	r25, Y+2	; 0x02
- 2d4:	91 11       	cpse	r25, r1
- 2d6:	80 e0       	ldi	r24, 0x00	; 0
- 2d8:	8a 83       	std	Y+2, r24	; 0x02
                 cambiarPatronLeds = 0;
- 2da:	19 82       	std	Y+1, r1	; 0x01
             }
 
             if (LEDsPatronA)
- 2dc:	2a 81       	ldd	r18, Y+2	; 0x02
- 2de:	22 23       	and	r18, r18
- 2e0:	29 f0       	breq	.+10     	; 0x2ec <main+0x9e>
                 LEDsRebote(&PuertoLEDs);
- 2e2:	8b e2       	ldi	r24, 0x2B	; 43
- 2e4:	90 e0       	ldi	r25, 0x00	; 0
- 2e6:	0e 94 53 00 	call	0xa6	; 0xa6 <LEDsRebote>
- 2ea:	04 c0       	rjmp	.+8      	; 0x2f4 <main+0xa6>
+ 22c:	8b e2       	ldi	r24, 0x2B	; 43
+ 22e:	90 e0       	ldi	r25, 0x00	; 0
+            {
+                LEDsPatronA = !LEDsPatronA;
+                cambiarPatronLeds = 0;
+            }
+
+            if (LEDsPatronA)
+ 230:	55 20       	and	r5, r5
+ 232:	29 f0       	breq	.+10     	; 0x23e <main+0x86>
+                LEDsRebote(&PuertoLEDs);
+ 234:	0e 94 52 00 	call	0xa4	; 0xa4 <LEDsRebote>
+ 238:	55 24       	eor	r5, r5
+ 23a:	53 94       	inc	r5
+ 23c:	02 c0       	rjmp	.+4      	; 0x242 <main+0x8a>
             else
                 LEDsRotar(&PuertoLEDs);
- 2ec:	8b e2       	ldi	r24, 0x2B	; 43
- 2ee:	90 e0       	ldi	r25, 0x00	; 0
- 2f0:	0e 94 48 00 	call	0x90	; 0x90 <LEDsRotar>
+ 23e:	0e 94 48 00 	call	0x90	; 0x90 <LEDsRotar>
+ 242:	1e 82       	std	Y+6, r1	; 0x06
         }
 
         if ((contadorCiclos % CiclosNeoPixel) == 0)
- 2f4:	0f 2e       	mov	r0, r31
- 2f6:	f6 e0       	ldi	r31, 0x06	; 6
- 2f8:	af 2e       	mov	r10, r31
- 2fa:	f0 2d       	mov	r31, r0
- 2fc:	b1 2c       	mov	r11, r1
- 2fe:	c1 2c       	mov	r12, r1
- 300:	d1 2c       	mov	r13, r1
- 302:	e1 2c       	mov	r14, r1
- 304:	f1 2c       	mov	r15, r1
- 306:	00 e0       	ldi	r16, 0x00	; 0
- 308:	10 e0       	ldi	r17, 0x00	; 0
- 30a:	2d 81       	ldd	r18, Y+5	; 0x05
- 30c:	34 2d       	mov	r19, r4
- 30e:	45 2d       	mov	r20, r5
- 310:	56 2d       	mov	r21, r6
- 312:	67 2d       	mov	r22, r7
- 314:	78 2d       	mov	r23, r8
- 316:	82 2d       	mov	r24, r2
- 318:	93 2d       	mov	r25, r3
- 31a:	0e 94 3d 02 	call	0x47a	; 0x47a <__umoddi3>
- 31e:	a0 e0       	ldi	r26, 0x00	; 0
- 320:	0e 94 a8 02 	call	0x550	; 0x550 <__cmpdi2_s8>
- 324:	b9 f4       	brne	.+46     	; 0x354 <main+0x106>
+ 244:	86 e0       	ldi	r24, 0x06	; 6
+ 246:	a8 2e       	mov	r10, r24
+ 248:	b1 2c       	mov	r11, r1
+ 24a:	c1 2c       	mov	r12, r1
+ 24c:	d1 2c       	mov	r13, r1
+ 24e:	e1 2c       	mov	r14, r1
+ 250:	f1 2c       	mov	r15, r1
+ 252:	00 e0       	ldi	r16, 0x00	; 0
+ 254:	10 e0       	ldi	r17, 0x00	; 0
+ 256:	2d 81       	ldd	r18, Y+5	; 0x05
+ 258:	3a 81       	ldd	r19, Y+2	; 0x02
+ 25a:	49 2d       	mov	r20, r9
+ 25c:	58 2d       	mov	r21, r8
+ 25e:	67 2d       	mov	r22, r7
+ 260:	76 2d       	mov	r23, r6
+ 262:	83 2d       	mov	r24, r3
+ 264:	92 2d       	mov	r25, r2
+ 266:	0e 94 e3 01 	call	0x3c6	; 0x3c6 <__umoddi3>
+ 26a:	a0 e0       	ldi	r26, 0x00	; 0
+ 26c:	0e 94 4e 02 	call	0x49c	; 0x49c <__cmpdi2_s8>
+ 270:	99 f4       	brne	.+38     	; 0x298 <main+0xe0>
         {
             if (cambiarPatronNeoPixel)
- 326:	8b 81       	ldd	r24, Y+3	; 0x03
- 328:	88 23       	and	r24, r24
- 32a:	31 f0       	breq	.+12     	; 0x338 <main+0xea>
+ 272:	44 20       	and	r4, r4
+ 274:	29 f0       	breq	.+10     	; 0x280 <main+0xc8>
             {
                 NeoPixelPatronA = !NeoPixelPatronA;
- 32c:	81 e0       	ldi	r24, 0x01	; 1
- 32e:	9c 81       	ldd	r25, Y+4	; 0x04
- 330:	91 11       	cpse	r25, r1
- 332:	80 e0       	ldi	r24, 0x00	; 0
- 334:	8c 83       	std	Y+4, r24	; 0x04
+ 276:	81 e0       	ldi	r24, 0x01	; 1
+ 278:	99 81       	ldd	r25, Y+1	; 0x01
+ 27a:	91 11       	cpse	r25, r1
+ 27c:	80 e0       	ldi	r24, 0x00	; 0
+ 27e:	89 83       	std	Y+1, r24	; 0x01
                 cambiarPatronNeoPixel = 0;
- 336:	1b 82       	std	Y+3, r1	; 0x03
             }
 
             if (NeoPixelPatronA)
- 338:	2c 81       	ldd	r18, Y+4	; 0x04
- 33a:	22 23       	and	r18, r18
- 33c:	31 f0       	breq	.+12     	; 0x34a <main+0xfc>
+ 280:	29 81       	ldd	r18, Y+1	; 0x01
                 NeoPixelRotarSalidaVerdes(&PuertoNeoPixel, PinNeoPixel);
- 33e:	60 e0       	ldi	r22, 0x00	; 0
- 340:	85 e2       	ldi	r24, 0x25	; 37
- 342:	90 e0       	ldi	r25, 0x00	; 0
- 344:	0e 94 c9 00 	call	0x192	; 0x192 <NeoPixelRotarSalidaVerdes>
- 348:	05 c0       	rjmp	.+10     	; 0x354 <main+0x106>
+ 282:	60 e0       	ldi	r22, 0x00	; 0
+ 284:	85 e2       	ldi	r24, 0x25	; 37
+ 286:	90 e0       	ldi	r25, 0x00	; 0
+            {
+                NeoPixelPatronA = !NeoPixelPatronA;
+                cambiarPatronNeoPixel = 0;
+            }
+
+            if (NeoPixelPatronA)
+ 288:	22 23       	and	r18, r18
+ 28a:	19 f0       	breq	.+6      	; 0x292 <main+0xda>
+                NeoPixelRotarSalidaVerdes(&PuertoNeoPixel, PinNeoPixel);
+ 28c:	0e 94 a1 00 	call	0x142	; 0x142 <NeoPixelRotarSalidaVerdes>
+ 290:	02 c0       	rjmp	.+4      	; 0x296 <main+0xde>
             else
                 NeoPixelRotarRojoAzul(&PuertoNeoPixel, PinNeoPixel);
- 34a:	60 e0       	ldi	r22, 0x00	; 0
- 34c:	85 e2       	ldi	r24, 0x25	; 37
- 34e:	90 e0       	ldi	r25, 0x00	; 0
- 350:	0e 94 6c 00 	call	0xd8	; 0xd8 <NeoPixelRotarRojoAzul>
+ 292:	0e 94 6a 00 	call	0xd4	; 0xd4 <NeoPixelRotarRojoAzul>
+ 296:	41 2c       	mov	r4, r1
 	#else
 		//round up by default
 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
 	#endif
 
 	__builtin_avr_delay_cycles(__ticks_dc);
- 354:	8f e7       	ldi	r24, 0x7F	; 127
- 356:	98 e3       	ldi	r25, 0x38	; 56
- 358:	21 e0       	ldi	r18, 0x01	; 1
- 35a:	81 50       	subi	r24, 0x01	; 1
- 35c:	90 40       	sbci	r25, 0x00	; 0
- 35e:	20 40       	sbci	r18, 0x00	; 0
- 360:	e1 f7       	brne	.-8      	; 0x35a <main+0x10c>
- 362:	00 c0       	rjmp	.+0      	; 0x364 <main+0x116>
- 364:	00 00       	nop
+ 298:	8f e7       	ldi	r24, 0x7F	; 127
+ 29a:	98 e3       	ldi	r25, 0x38	; 56
+ 29c:	21 e0       	ldi	r18, 0x01	; 1
+ 29e:	81 50       	subi	r24, 0x01	; 1
+ 2a0:	90 40       	sbci	r25, 0x00	; 0
+ 2a2:	20 40       	sbci	r18, 0x00	; 0
+ 2a4:	e1 f7       	brne	.-8      	; 0x29e <main+0xe6>
+ 2a6:	00 c0       	rjmp	.+0      	; 0x2a8 <main+0xf0>
+ 2a8:	00 00       	nop
         }
 
         _delay_ms(TiempoChequeos);
         ++contadorCiclos;
- 366:	2d 81       	ldd	r18, Y+5	; 0x05
- 368:	34 2d       	mov	r19, r4
- 36a:	45 2d       	mov	r20, r5
- 36c:	56 2d       	mov	r21, r6
- 36e:	67 2d       	mov	r22, r7
- 370:	78 2d       	mov	r23, r8
- 372:	82 2d       	mov	r24, r2
- 374:	93 2d       	mov	r25, r3
- 376:	a1 e0       	ldi	r26, 0x01	; 1
- 378:	0e 94 9c 02 	call	0x538	; 0x538 <__adddi3_s8>
- 37c:	2d 83       	std	Y+5, r18	; 0x05
- 37e:	43 2e       	mov	r4, r19
- 380:	54 2e       	mov	r5, r20
- 382:	65 2e       	mov	r6, r21
- 384:	76 2e       	mov	r7, r22
- 386:	87 2e       	mov	r8, r23
- 388:	28 2e       	mov	r2, r24
- 38a:	39 2e       	mov	r3, r25
-    }
- 38c:	79 cf       	rjmp	.-270    	; 0x280 <main+0x32>
+ 2aa:	2d 81       	ldd	r18, Y+5	; 0x05
+ 2ac:	3a 81       	ldd	r19, Y+2	; 0x02
+ 2ae:	49 2d       	mov	r20, r9
+ 2b0:	58 2d       	mov	r21, r8
+ 2b2:	67 2d       	mov	r22, r7
+ 2b4:	76 2d       	mov	r23, r6
+ 2b6:	83 2d       	mov	r24, r3
+ 2b8:	92 2d       	mov	r25, r2
+ 2ba:	a1 e0       	ldi	r26, 0x01	; 1
+ 2bc:	0e 94 42 02 	call	0x484	; 0x484 <__adddi3_s8>
+ 2c0:	2d 83       	std	Y+5, r18	; 0x05
+ 2c2:	3a 83       	std	Y+2, r19	; 0x02
+ 2c4:	94 2e       	mov	r9, r20
+ 2c6:	85 2e       	mov	r8, r21
+ 2c8:	76 2e       	mov	r7, r22
+ 2ca:	67 2e       	mov	r6, r23
+ 2cc:	38 2e       	mov	r3, r24
+ 2ce:	29 2e       	mov	r2, r25
+    PuertoLEDs = 0b00000001; // Un led al comienzo debe estar encendido
 
-0000038e <NeoPixelSendColorArray>:
+    while (1)
+    {
+
+        detectarSoltado(estaPulsadoElBotonLeds(), seApretoBotonLeds, cambiarPatronLeds);
+ 2d0:	8c 81       	ldd	r24, Y+4	; 0x04
+ 2d2:	81 30       	cpi	r24, 0x01	; 1
+ 2d4:	09 f4       	brne	.+2      	; 0x2d8 <main+0x120>
+ 2d6:	88 cf       	rjmp	.-240    	; 0x1e8 <main+0x30>
+ 2d8:	30 9b       	sbis	0x06, 0	; 6
+ 2da:	86 cf       	rjmp	.-244    	; 0x1e8 <main+0x30>
+ 2dc:	21 e0       	ldi	r18, 0x01	; 1
+ 2de:	2e 83       	std	Y+6, r18	; 0x06
+ 2e0:	83 cf       	rjmp	.-250    	; 0x1e8 <main+0x30>
+
+000002e2 <NeoPixelSendColorArray>:
         - El tiempo para setear todos los leds esta definido, no se puede hacer mas rapido
             por lo que no importa llamar una funcion o macro...
 */
 
 void NeoPixelSendColorArray(volatile uint8_t *port, const uint8_t pin, const uint8_t *colores, const uint8_t cantLeds)
 {
- 38e:	0f 93       	push	r16
- 390:	1f 93       	push	r17
- 392:	cf 93       	push	r28
- 394:	df 93       	push	r29
- 396:	dc 01       	movw	r26, r24
- 398:	ea 01       	movw	r28, r20
+ 2e2:	ef 92       	push	r14
+ 2e4:	ff 92       	push	r15
+ 2e6:	0f 93       	push	r16
+ 2e8:	1f 93       	push	r17
+ 2ea:	cf 93       	push	r28
+ 2ec:	df 93       	push	r29
+ 2ee:	fc 01       	movw	r30, r24
+ 2f0:	7a 01       	movw	r14, r20
     cli();
- 39a:	f8 94       	cli
+ 2f2:	f8 94       	cli
     for (uint8_t n = 0; n < cantLeds * 3; n++)
- 39c:	50 e0       	ldi	r21, 0x00	; 0
- 39e:	49 c0       	rjmp	.+146    	; 0x432 <__EEPROM_REGION_LENGTH__+0x32>
+ 2f4:	43 e0       	ldi	r20, 0x03	; 3
+ 2f6:	24 9f       	mul	r18, r20
+ 2f8:	90 01       	movw	r18, r0
+ 2fa:	11 24       	eor	r1, r1
         NEOPIXEL_SEND_PIXEL_BYTE(colores[n], port, pin);
- 3a0:	31 e0       	ldi	r19, 0x01	; 1
- 3a2:	06 2e       	mov	r0, r22
- 3a4:	01 c0       	rjmp	.+2      	; 0x3a8 <NeoPixelSendColorArray+0x1a>
- 3a6:	33 0f       	add	r19, r19
- 3a8:	0a 94       	dec	r0
- 3aa:	ea f7       	brpl	.-6      	; 0x3a6 <NeoPixelSendColorArray+0x18>
- 3ac:	97 e0       	ldi	r25, 0x07	; 7
- 3ae:	3d c0       	rjmp	.+122    	; 0x42a <__EEPROM_REGION_LENGTH__+0x2a>
- 3b0:	fe 01       	movw	r30, r28
- 3b2:	e5 0f       	add	r30, r21
- 3b4:	f1 1d       	adc	r31, r1
- 3b6:	e0 81       	ld	r30, Z
- 3b8:	f0 e0       	ldi	r31, 0x00	; 0
- 3ba:	09 2e       	mov	r0, r25
- 3bc:	02 c0       	rjmp	.+4      	; 0x3c2 <NeoPixelSendColorArray+0x34>
- 3be:	f5 95       	asr	r31
- 3c0:	e7 95       	ror	r30
- 3c2:	0a 94       	dec	r0
- 3c4:	e2 f7       	brpl	.-8      	; 0x3be <NeoPixelSendColorArray+0x30>
- 3c6:	e0 ff       	sbrs	r30, 0
- 3c8:	18 c0       	rjmp	.+48     	; 0x3fa <NeoPixelSendColorArray+0x6c>
- 3ca:	83 2f       	mov	r24, r19
- 3cc:	80 95       	com	r24
- 3ce:	0c 91       	ld	r16, X
- 3d0:	03 2b       	or	r16, r19
- 3d2:	0c 93       	st	X, r16
-	...
- 3e4:	0c 91       	ld	r16, X
- 3e6:	08 23       	and	r16, r24
- 3e8:	0c 93       	st	X, r16
-	...
- 3f6:	00 00       	nop
- 3f8:	17 c0       	rjmp	.+46     	; 0x428 <__EEPROM_REGION_LENGTH__+0x28>
- 3fa:	83 2f       	mov	r24, r19
- 3fc:	80 95       	com	r24
- 3fe:	0c 91       	ld	r16, X
- 400:	03 2b       	or	r16, r19
- 402:	0c 93       	st	X, r16
- 404:	00 00       	nop
- 406:	0c 91       	ld	r16, X
- 408:	08 23       	and	r16, r24
- 40a:	0c 93       	st	X, r16
-	...
- 428:	91 50       	subi	r25, 0x01	; 1
- 42a:	99 23       	and	r25, r25
- 42c:	0c f0       	brlt	.+2      	; 0x430 <__EEPROM_REGION_LENGTH__+0x30>
- 42e:	c0 cf       	rjmp	.-128    	; 0x3b0 <NeoPixelSendColorArray+0x22>
+ 2fc:	81 e0       	ldi	r24, 0x01	; 1
+ 2fe:	90 e0       	ldi	r25, 0x00	; 0
+ 300:	ac 01       	movw	r20, r24
+ 302:	02 c0       	rjmp	.+4      	; 0x308 <NeoPixelSendColorArray+0x26>
+ 304:	44 0f       	add	r20, r20
+ 306:	55 1f       	adc	r21, r21
+ 308:	6a 95       	dec	r22
+ 30a:	e2 f7       	brpl	.-8      	; 0x304 <NeoPixelSendColorArray+0x22>
+ 30c:	ba 01       	movw	r22, r20
+ 30e:	a4 2f       	mov	r26, r20
 */
 
 void NeoPixelSendColorArray(volatile uint8_t *port, const uint8_t pin, const uint8_t *colores, const uint8_t cantLeds)
 {
     cli();
     for (uint8_t n = 0; n < cantLeds * 3; n++)
- 430:	5f 5f       	subi	r21, 0xFF	; 255
- 432:	e5 2f       	mov	r30, r21
- 434:	f0 e0       	ldi	r31, 0x00	; 0
- 436:	82 2f       	mov	r24, r18
- 438:	90 e0       	ldi	r25, 0x00	; 0
- 43a:	8c 01       	movw	r16, r24
- 43c:	00 0f       	add	r16, r16
- 43e:	11 1f       	adc	r17, r17
- 440:	80 0f       	add	r24, r16
- 442:	91 1f       	adc	r25, r17
- 444:	e8 17       	cp	r30, r24
- 446:	f9 07       	cpc	r31, r25
- 448:	0c f4       	brge	.+2      	; 0x44c <__EEPROM_REGION_LENGTH__+0x4c>
- 44a:	aa cf       	rjmp	.-172    	; 0x3a0 <NeoPixelSendColorArray+0x12>
+ 310:	50 e0       	ldi	r21, 0x00	; 0
+ 312:	46 2f       	mov	r20, r22
+ 314:	40 95       	com	r20
+ 316:	85 2f       	mov	r24, r21
+ 318:	90 e0       	ldi	r25, 0x00	; 0
+ 31a:	82 17       	cp	r24, r18
+ 31c:	93 07       	cpc	r25, r19
+ 31e:	0c f0       	brlt	.+2      	; 0x322 <NeoPixelSendColorArray+0x40>
+ 320:	40 c0       	rjmp	.+128    	; 0x3a2 <NeoPixelSendColorArray+0xc0>
+        NEOPIXEL_SEND_PIXEL_BYTE(colores[n], port, pin);
+ 322:	e7 01       	movw	r28, r14
+ 324:	c8 0f       	add	r28, r24
+ 326:	d9 1f       	adc	r29, r25
+ 328:	c8 81       	ld	r28, Y
+ 32a:	d0 e0       	ldi	r29, 0x00	; 0
+ 32c:	87 e0       	ldi	r24, 0x07	; 7
+ 32e:	90 e0       	ldi	r25, 0x00	; 0
+ 330:	8e 01       	movw	r16, r28
+ 332:	08 2e       	mov	r0, r24
+ 334:	02 c0       	rjmp	.+4      	; 0x33a <NeoPixelSendColorArray+0x58>
+ 336:	15 95       	asr	r17
+ 338:	07 95       	ror	r16
+ 33a:	0a 94       	dec	r0
+ 33c:	e2 f7       	brpl	.-8      	; 0x336 <NeoPixelSendColorArray+0x54>
+ 33e:	00 ff       	sbrs	r16, 0
+ 340:	16 c0       	rjmp	.+44     	; 0x36e <NeoPixelSendColorArray+0x8c>
+ 342:	00 81       	ld	r16, Z
+ 344:	0a 2b       	or	r16, r26
+ 346:	00 83       	st	Z, r16
+	...
+ 358:	00 81       	ld	r16, Z
+ 35a:	04 23       	and	r16, r20
+ 35c:	00 83       	st	Z, r16
+	...
+ 36a:	00 00       	nop
+ 36c:	15 c0       	rjmp	.+42     	; 0x398 <NeoPixelSendColorArray+0xb6>
+ 36e:	00 81       	ld	r16, Z
+ 370:	0a 2b       	or	r16, r26
+ 372:	00 83       	st	Z, r16
+ 374:	00 00       	nop
+ 376:	00 81       	ld	r16, Z
+ 378:	04 23       	and	r16, r20
+ 37a:	00 83       	st	Z, r16
+	...
+ 398:	01 97       	sbiw	r24, 0x01	; 1
+ 39a:	08 f0       	brcs	.+2      	; 0x39e <NeoPixelSendColorArray+0xbc>
+ 39c:	c9 cf       	rjmp	.-110    	; 0x330 <NeoPixelSendColorArray+0x4e>
+*/
+
+void NeoPixelSendColorArray(volatile uint8_t *port, const uint8_t pin, const uint8_t *colores, const uint8_t cantLeds)
+{
+    cli();
+    for (uint8_t n = 0; n < cantLeds * 3; n++)
+ 39e:	5f 5f       	subi	r21, 0xFF	; 255
+ 3a0:	ba cf       	rjmp	.-140    	; 0x316 <NeoPixelSendColorArray+0x34>
         NEOPIXEL_SEND_PIXEL_BYTE(colores[n], port, pin);
 
     NEOPIXEL_SEND_RES(port, pin);
- 44c:	2c 91       	ld	r18, X
- 44e:	81 e0       	ldi	r24, 0x01	; 1
- 450:	90 e0       	ldi	r25, 0x00	; 0
- 452:	02 c0       	rjmp	.+4      	; 0x458 <__EEPROM_REGION_LENGTH__+0x58>
- 454:	88 0f       	add	r24, r24
- 456:	99 1f       	adc	r25, r25
- 458:	6a 95       	dec	r22
- 45a:	e2 f7       	brpl	.-8      	; 0x454 <__EEPROM_REGION_LENGTH__+0x54>
- 45c:	80 95       	com	r24
- 45e:	82 23       	and	r24, r18
- 460:	8c 93       	st	X, r24
+ 3a2:	80 81       	ld	r24, Z
+ 3a4:	60 95       	com	r22
+ 3a6:	68 23       	and	r22, r24
+ 3a8:	60 83       	st	Z, r22
 	#else
 		//round up by default
 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
 	#endif
 
 	__builtin_avr_delay_cycles(__ticks_dc);
- 462:	8f e8       	ldi	r24, 0x8F	; 143
- 464:	91 e0       	ldi	r25, 0x01	; 1
- 466:	01 97       	sbiw	r24, 0x01	; 1
- 468:	f1 f7       	brne	.-4      	; 0x466 <__EEPROM_REGION_LENGTH__+0x66>
- 46a:	00 c0       	rjmp	.+0      	; 0x46c <__EEPROM_REGION_LENGTH__+0x6c>
- 46c:	00 00       	nop
+ 3aa:	8f e8       	ldi	r24, 0x8F	; 143
+ 3ac:	91 e0       	ldi	r25, 0x01	; 1
+ 3ae:	01 97       	sbiw	r24, 0x01	; 1
+ 3b0:	f1 f7       	brne	.-4      	; 0x3ae <NeoPixelSendColorArray+0xcc>
+ 3b2:	00 c0       	rjmp	.+0      	; 0x3b4 <NeoPixelSendColorArray+0xd2>
+ 3b4:	00 00       	nop
     sei();
- 46e:	78 94       	sei
- 470:	df 91       	pop	r29
- 472:	cf 91       	pop	r28
- 474:	1f 91       	pop	r17
- 476:	0f 91       	pop	r16
- 478:	08 95       	ret
+ 3b6:	78 94       	sei
+ 3b8:	df 91       	pop	r29
+ 3ba:	cf 91       	pop	r28
+ 3bc:	1f 91       	pop	r17
+ 3be:	0f 91       	pop	r16
+ 3c0:	ff 90       	pop	r15
+ 3c2:	ef 90       	pop	r14
+ 3c4:	08 95       	ret
 
-0000047a <__umoddi3>:
- 47a:	68 94       	set
- 47c:	01 c0       	rjmp	.+2      	; 0x480 <__udivdi3_umoddi3>
+000003c6 <__umoddi3>:
+ 3c6:	68 94       	set
+ 3c8:	01 c0       	rjmp	.+2      	; 0x3cc <__udivdi3_umoddi3>
 
-0000047e <__udivdi3>:
- 47e:	e8 94       	clt
+000003ca <__udivdi3>:
+ 3ca:	e8 94       	clt
 
-00000480 <__udivdi3_umoddi3>:
- 480:	8f 92       	push	r8
- 482:	9f 92       	push	r9
- 484:	cf 93       	push	r28
- 486:	df 93       	push	r29
- 488:	0e 94 4b 02 	call	0x496	; 0x496 <__udivmod64>
- 48c:	df 91       	pop	r29
- 48e:	cf 91       	pop	r28
- 490:	9f 90       	pop	r9
- 492:	8f 90       	pop	r8
- 494:	08 95       	ret
+000003cc <__udivdi3_umoddi3>:
+ 3cc:	8f 92       	push	r8
+ 3ce:	9f 92       	push	r9
+ 3d0:	cf 93       	push	r28
+ 3d2:	df 93       	push	r29
+ 3d4:	0e 94 f1 01 	call	0x3e2	; 0x3e2 <__udivmod64>
+ 3d8:	df 91       	pop	r29
+ 3da:	cf 91       	pop	r28
+ 3dc:	9f 90       	pop	r9
+ 3de:	8f 90       	pop	r8
+ 3e0:	08 95       	ret
 
-00000496 <__udivmod64>:
- 496:	88 24       	eor	r8, r8
- 498:	99 24       	eor	r9, r9
- 49a:	f4 01       	movw	r30, r8
- 49c:	e4 01       	movw	r28, r8
- 49e:	b0 e4       	ldi	r27, 0x40	; 64
- 4a0:	9f 93       	push	r25
- 4a2:	aa 27       	eor	r26, r26
- 4a4:	9a 15       	cp	r25, r10
- 4a6:	8b 04       	cpc	r8, r11
- 4a8:	9c 04       	cpc	r9, r12
- 4aa:	ed 05       	cpc	r30, r13
- 4ac:	fe 05       	cpc	r31, r14
- 4ae:	cf 05       	cpc	r28, r15
- 4b0:	d0 07       	cpc	r29, r16
- 4b2:	a1 07       	cpc	r26, r17
- 4b4:	98 f4       	brcc	.+38     	; 0x4dc <__udivmod64+0x46>
- 4b6:	ad 2f       	mov	r26, r29
- 4b8:	dc 2f       	mov	r29, r28
- 4ba:	cf 2f       	mov	r28, r31
- 4bc:	fe 2f       	mov	r31, r30
- 4be:	e9 2d       	mov	r30, r9
- 4c0:	98 2c       	mov	r9, r8
- 4c2:	89 2e       	mov	r8, r25
- 4c4:	98 2f       	mov	r25, r24
- 4c6:	87 2f       	mov	r24, r23
- 4c8:	76 2f       	mov	r23, r22
- 4ca:	65 2f       	mov	r22, r21
- 4cc:	54 2f       	mov	r21, r20
- 4ce:	43 2f       	mov	r20, r19
- 4d0:	32 2f       	mov	r19, r18
- 4d2:	22 27       	eor	r18, r18
- 4d4:	b8 50       	subi	r27, 0x08	; 8
- 4d6:	31 f7       	brne	.-52     	; 0x4a4 <__udivmod64+0xe>
- 4d8:	bf 91       	pop	r27
- 4da:	27 c0       	rjmp	.+78     	; 0x52a <__udivmod64+0x94>
- 4dc:	1b 2e       	mov	r1, r27
- 4de:	bf 91       	pop	r27
- 4e0:	bb 27       	eor	r27, r27
- 4e2:	22 0f       	add	r18, r18
- 4e4:	33 1f       	adc	r19, r19
- 4e6:	44 1f       	adc	r20, r20
- 4e8:	55 1f       	adc	r21, r21
- 4ea:	66 1f       	adc	r22, r22
- 4ec:	77 1f       	adc	r23, r23
- 4ee:	88 1f       	adc	r24, r24
- 4f0:	99 1f       	adc	r25, r25
- 4f2:	88 1c       	adc	r8, r8
- 4f4:	99 1c       	adc	r9, r9
- 4f6:	ee 1f       	adc	r30, r30
- 4f8:	ff 1f       	adc	r31, r31
- 4fa:	cc 1f       	adc	r28, r28
- 4fc:	dd 1f       	adc	r29, r29
- 4fe:	aa 1f       	adc	r26, r26
- 500:	bb 1f       	adc	r27, r27
- 502:	8a 14       	cp	r8, r10
- 504:	9b 04       	cpc	r9, r11
- 506:	ec 05       	cpc	r30, r12
- 508:	fd 05       	cpc	r31, r13
- 50a:	ce 05       	cpc	r28, r14
- 50c:	df 05       	cpc	r29, r15
- 50e:	a0 07       	cpc	r26, r16
- 510:	b1 07       	cpc	r27, r17
- 512:	48 f0       	brcs	.+18     	; 0x526 <__udivmod64+0x90>
- 514:	8a 18       	sub	r8, r10
- 516:	9b 08       	sbc	r9, r11
- 518:	ec 09       	sbc	r30, r12
- 51a:	fd 09       	sbc	r31, r13
- 51c:	ce 09       	sbc	r28, r14
- 51e:	df 09       	sbc	r29, r15
- 520:	a0 0b       	sbc	r26, r16
- 522:	b1 0b       	sbc	r27, r17
- 524:	21 60       	ori	r18, 0x01	; 1
- 526:	1a 94       	dec	r1
- 528:	e1 f6       	brne	.-72     	; 0x4e2 <__udivmod64+0x4c>
- 52a:	2e f4       	brtc	.+10     	; 0x536 <__udivmod64+0xa0>
- 52c:	94 01       	movw	r18, r8
- 52e:	af 01       	movw	r20, r30
- 530:	be 01       	movw	r22, r28
- 532:	cd 01       	movw	r24, r26
- 534:	00 0c       	add	r0, r0
- 536:	08 95       	ret
+000003e2 <__udivmod64>:
+ 3e2:	88 24       	eor	r8, r8
+ 3e4:	99 24       	eor	r9, r9
+ 3e6:	f4 01       	movw	r30, r8
+ 3e8:	e4 01       	movw	r28, r8
+ 3ea:	b0 e4       	ldi	r27, 0x40	; 64
+ 3ec:	9f 93       	push	r25
+ 3ee:	aa 27       	eor	r26, r26
+ 3f0:	9a 15       	cp	r25, r10
+ 3f2:	8b 04       	cpc	r8, r11
+ 3f4:	9c 04       	cpc	r9, r12
+ 3f6:	ed 05       	cpc	r30, r13
+ 3f8:	fe 05       	cpc	r31, r14
+ 3fa:	cf 05       	cpc	r28, r15
+ 3fc:	d0 07       	cpc	r29, r16
+ 3fe:	a1 07       	cpc	r26, r17
+ 400:	98 f4       	brcc	.+38     	; 0x428 <__EEPROM_REGION_LENGTH__+0x28>
+ 402:	ad 2f       	mov	r26, r29
+ 404:	dc 2f       	mov	r29, r28
+ 406:	cf 2f       	mov	r28, r31
+ 408:	fe 2f       	mov	r31, r30
+ 40a:	e9 2d       	mov	r30, r9
+ 40c:	98 2c       	mov	r9, r8
+ 40e:	89 2e       	mov	r8, r25
+ 410:	98 2f       	mov	r25, r24
+ 412:	87 2f       	mov	r24, r23
+ 414:	76 2f       	mov	r23, r22
+ 416:	65 2f       	mov	r22, r21
+ 418:	54 2f       	mov	r21, r20
+ 41a:	43 2f       	mov	r20, r19
+ 41c:	32 2f       	mov	r19, r18
+ 41e:	22 27       	eor	r18, r18
+ 420:	b8 50       	subi	r27, 0x08	; 8
+ 422:	31 f7       	brne	.-52     	; 0x3f0 <__udivmod64+0xe>
+ 424:	bf 91       	pop	r27
+ 426:	27 c0       	rjmp	.+78     	; 0x476 <__EEPROM_REGION_LENGTH__+0x76>
+ 428:	1b 2e       	mov	r1, r27
+ 42a:	bf 91       	pop	r27
+ 42c:	bb 27       	eor	r27, r27
+ 42e:	22 0f       	add	r18, r18
+ 430:	33 1f       	adc	r19, r19
+ 432:	44 1f       	adc	r20, r20
+ 434:	55 1f       	adc	r21, r21
+ 436:	66 1f       	adc	r22, r22
+ 438:	77 1f       	adc	r23, r23
+ 43a:	88 1f       	adc	r24, r24
+ 43c:	99 1f       	adc	r25, r25
+ 43e:	88 1c       	adc	r8, r8
+ 440:	99 1c       	adc	r9, r9
+ 442:	ee 1f       	adc	r30, r30
+ 444:	ff 1f       	adc	r31, r31
+ 446:	cc 1f       	adc	r28, r28
+ 448:	dd 1f       	adc	r29, r29
+ 44a:	aa 1f       	adc	r26, r26
+ 44c:	bb 1f       	adc	r27, r27
+ 44e:	8a 14       	cp	r8, r10
+ 450:	9b 04       	cpc	r9, r11
+ 452:	ec 05       	cpc	r30, r12
+ 454:	fd 05       	cpc	r31, r13
+ 456:	ce 05       	cpc	r28, r14
+ 458:	df 05       	cpc	r29, r15
+ 45a:	a0 07       	cpc	r26, r16
+ 45c:	b1 07       	cpc	r27, r17
+ 45e:	48 f0       	brcs	.+18     	; 0x472 <__EEPROM_REGION_LENGTH__+0x72>
+ 460:	8a 18       	sub	r8, r10
+ 462:	9b 08       	sbc	r9, r11
+ 464:	ec 09       	sbc	r30, r12
+ 466:	fd 09       	sbc	r31, r13
+ 468:	ce 09       	sbc	r28, r14
+ 46a:	df 09       	sbc	r29, r15
+ 46c:	a0 0b       	sbc	r26, r16
+ 46e:	b1 0b       	sbc	r27, r17
+ 470:	21 60       	ori	r18, 0x01	; 1
+ 472:	1a 94       	dec	r1
+ 474:	e1 f6       	brne	.-72     	; 0x42e <__EEPROM_REGION_LENGTH__+0x2e>
+ 476:	2e f4       	brtc	.+10     	; 0x482 <__EEPROM_REGION_LENGTH__+0x82>
+ 478:	94 01       	movw	r18, r8
+ 47a:	af 01       	movw	r20, r30
+ 47c:	be 01       	movw	r22, r28
+ 47e:	cd 01       	movw	r24, r26
+ 480:	00 0c       	add	r0, r0
+ 482:	08 95       	ret
 
-00000538 <__adddi3_s8>:
- 538:	00 24       	eor	r0, r0
- 53a:	a7 fd       	sbrc	r26, 7
- 53c:	00 94       	com	r0
- 53e:	2a 0f       	add	r18, r26
- 540:	30 1d       	adc	r19, r0
- 542:	40 1d       	adc	r20, r0
- 544:	50 1d       	adc	r21, r0
- 546:	60 1d       	adc	r22, r0
- 548:	70 1d       	adc	r23, r0
- 54a:	80 1d       	adc	r24, r0
- 54c:	90 1d       	adc	r25, r0
- 54e:	08 95       	ret
+00000484 <__adddi3_s8>:
+ 484:	00 24       	eor	r0, r0
+ 486:	a7 fd       	sbrc	r26, 7
+ 488:	00 94       	com	r0
+ 48a:	2a 0f       	add	r18, r26
+ 48c:	30 1d       	adc	r19, r0
+ 48e:	40 1d       	adc	r20, r0
+ 490:	50 1d       	adc	r21, r0
+ 492:	60 1d       	adc	r22, r0
+ 494:	70 1d       	adc	r23, r0
+ 496:	80 1d       	adc	r24, r0
+ 498:	90 1d       	adc	r25, r0
+ 49a:	08 95       	ret
 
-00000550 <__cmpdi2_s8>:
- 550:	00 24       	eor	r0, r0
- 552:	a7 fd       	sbrc	r26, 7
- 554:	00 94       	com	r0
- 556:	2a 17       	cp	r18, r26
- 558:	30 05       	cpc	r19, r0
- 55a:	40 05       	cpc	r20, r0
- 55c:	50 05       	cpc	r21, r0
- 55e:	60 05       	cpc	r22, r0
- 560:	70 05       	cpc	r23, r0
- 562:	80 05       	cpc	r24, r0
- 564:	90 05       	cpc	r25, r0
- 566:	08 95       	ret
+0000049c <__cmpdi2_s8>:
+ 49c:	00 24       	eor	r0, r0
+ 49e:	a7 fd       	sbrc	r26, 7
+ 4a0:	00 94       	com	r0
+ 4a2:	2a 17       	cp	r18, r26
+ 4a4:	30 05       	cpc	r19, r0
+ 4a6:	40 05       	cpc	r20, r0
+ 4a8:	50 05       	cpc	r21, r0
+ 4aa:	60 05       	cpc	r22, r0
+ 4ac:	70 05       	cpc	r23, r0
+ 4ae:	80 05       	cpc	r24, r0
+ 4b0:	90 05       	cpc	r25, r0
+ 4b2:	08 95       	ret
 
-00000568 <_exit>:
- 568:	f8 94       	cli
+000004b4 <_exit>:
+ 4b4:	f8 94       	cli
 
-0000056a <__stop_program>:
- 56a:	ff cf       	rjmp	.-2      	; 0x56a <__stop_program>
+000004b6 <__stop_program>:
+ 4b6:	ff cf       	rjmp	.-2      	; 0x4b6 <__stop_program>
