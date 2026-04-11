@@ -42,10 +42,10 @@ int main(void)
                 cambiarPatronLeds = 0;
             }
 
-            if (NeoPixelPatronA)
-                LEDsRotar(&PuertoLEDs);
-            else
+            if (LEDsPatronA)
                 LEDsRebote(&PuertoLEDs);
+            else
+                LEDsRotar(&PuertoLEDs);
         }
 
         if ((contadorCiclos % CiclosNeoPixel) == 0)
@@ -57,9 +57,9 @@ int main(void)
             }
 
             if (NeoPixelPatronA)
-                NeoPixelRotarRojoAzul(&PuertoNeoPixel, PinNeoPixel);
-            else
                 NeoPixelRotarSalidaVerdes(&PuertoNeoPixel, PinNeoPixel);
+            else
+                NeoPixelRotarRojoAzul(&PuertoNeoPixel, PinNeoPixel);
         }
 
         _delay_ms(TiempoChequeos);

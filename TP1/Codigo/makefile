@@ -1,11 +1,11 @@
 # ======================================
 # MICROCONTROLADOR
 # ======================================
-MCU      = atmega328p
-F_CPU    = 16000000UL
+MCU        = atmega328p
+F_CPU      = 16000000UL
 PROGRAMMER = arduino
-PORT     = /dev/ttyACM0
-BAUD     = 115200
+PORT       = /dev/ttyACM0
+BAUD       = 115200
 
 # ======================================
 # HERRAMIENTAS
@@ -19,28 +19,32 @@ DUDE    = avrdude
 # ======================================
 # ARCHIVOS (RECURSIVO)
 # ======================================
-TARGET  = main
+TARGET = main
+BUILD  = build
 
-# Busca todos los .c en el directorio raíz y subdirectorios
-SRC     = $(shell find . -name "*.c")
+SRC      = $(shell find . -name "*.c" -not -path "./$(BUILD)/*")
+OBJ      = $(patsubst ./%, $(BUILD)/%, $(SRC:.c=.o))
+DEP      = $(OBJ:.o=.d)
 
-# Genera los .o respetando la ruta de cada fuente
-OBJ     = $(SRC:.c=.o)
-
-# Busca todos los directorios que contienen .h para pasarlos como -I
-INC_DIRS = $(sort $(dir $(shell find . -name "*.h")))
+INC_DIRS = $(sort $(dir $(shell find . -name "*.h" -not -path "./$(BUILD)/*")))
 INCLUDES = $(addprefix -I, $(INC_DIRS))
 
 # ======================================
 # FLAGS
 # ======================================
-CFLAGS  = -mmcu=$(MCU)   \
-          -DF_CPU=$(F_CPU) \
-          -Wall            \
-          -Os              \
-          -g               \
-          -std=gnu11       \
-          $(INCLUDES)
+CFLAGS = -mmcu=$(MCU)        \
+         -DF_CPU=$(F_CPU)    \
+         -Wall               \
+         -Os                 \
+         -gdwarf-2           \
+         -std=gnu11          \
+         -ffunction-sections \
+         -fdata-sections     \
+         -flto               \
+         -MMD -MP            \
+         $(INCLUDES)
+
+LDFLAGS = -mmcu=$(MCU) -flto -Wl,--gc-sections
 
 # ======================================
 # DEFAULT
@@ -51,10 +55,13 @@ all: $(TARGET).elf size
 # COMPILACION
 # ======================================
 $(TARGET).elf: $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $^ -o $@
 
-%.o: %.c
+$(BUILD)/%.o: ./%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(DEP)
 
 # ======================================
 # TAMANO DEL PROGRAMA
@@ -67,6 +74,15 @@ size: $(TARGET).elf
 # ======================================
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
+
+hex: $(TARGET).hex
+
+# ======================================
+# PROTEUS (ELF sin debug para avr-gcc >= 14)
+# ======================================
+sim: $(TARGET).elf
+	$(OBJCOPY) --strip-debug $< $(TARGET)_sim.elf
+	@echo "Cargá $(TARGET)_sim.elf en Proteus"
 
 # ======================================
 # SUBIR AL MICRO
@@ -84,8 +100,8 @@ asm: $(TARGET).elf
 # LIMPIAR
 # ======================================
 clean:
-	find . -name "*.o" -delete
-	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).lst
+	rm -rf $(BUILD)
+	rm -f $(TARGET).elf $(TARGET).hex $(TARGET).lst $(TARGET)_sim.elf
 
 # ======================================
-.PHONY: all upload asm clean size
+.PHONY: all upload asm clean size hex sim

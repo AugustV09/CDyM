@@ -2,25 +2,21 @@
 
 void NeoPixelRotarSalidaVerdes(volatile uint8_t *port, uint8_t pin)
 {
-
     static uint8_t pos_verde = 0;
 
+    uint8_t frame[TOTAL_LEDS_NEOPIXEL * 3];
+
+    // Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
     {
-        if (i == pos_verde)
-        {
-            // Enviamos Verde Máximo (GRB: 255, 0, 0)
-            NEOPIXEL_SEND_MAX_GREEN(*port, pin);
-        }
-        else
-        {
-            // Enviamos Apagado (GRB: 0, 0, 0)
-            NEOPIXEL_SEND_OFF(*port, pin);
-        }
+        uint8_t g = (i == pos_verde) ? 255 : 0;
+        frame[i * 3 + 0] = g; // G
+        frame[i * 3 + 1] = 0; // R
+        frame[i * 3 + 2] = 0; // B
     }
 
-    ++pos_verde;
-    pos_verde %= TOTAL_LEDS_NEOPIXEL;
+    // Ya calculados los envia
+    NeoPixelSendColorArray(port, pin, frame, TOTAL_LEDS_NEOPIXEL * 3);
 
-    NEOPIXEL_SEND_RES(*port, pin);
+    pos_verde = (pos_verde + 1) % TOTAL_LEDS_NEOPIXEL;
 }

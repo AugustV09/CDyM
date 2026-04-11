@@ -1,7 +1,7 @@
 
 #include "Setup.h"
 
-#include "Definitions.h"
+#include "../Definitions.h"
 
 
 void configurarPuertos()
