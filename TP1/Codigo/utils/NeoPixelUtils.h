@@ -40,38 +40,46 @@
 #define NOP8 NOP4 NOP4
 
 // Macro para enviar un '1' lógico (Pulso Largo en Alto)
-#define NEOPIXEL_SEND_BIT_1(PORT_PTR, MASK)                                                             \
-    asm volatile(                                                                                       \
-        "ld   r16, %a0  \n\t" /* [2 ciclos] Lee el estado actual del puerto desde el puntero */         \
-        "or   r16, %1   \n\t" /* [1 ciclo]  Pone a '1' el bit correspondiente en el registro r16 */     \
-        "st   %a0, r16  \n\t" /* [2 ciclos] ESCRIBE al puerto: El pin sube a ALTO aquí */               \
-        NOP8                  /* [8 ciclos] Mantiene el pin en ALTO (Total T1H: 2+1+2+8 = 13 ciclos) */ \
-        "ld   r16, %a0  \n\t" /* [2 ciclos] Prepara la bajada: Lee el puerto otra vez */                \
-        "and  r16, %2   \n\t" /* [1 ciclo]  Aplica la máscara invertida (pone el bit en '0') */         \
-        "st   %a0, r16  \n\t" /* [2 ciclos] ESCRIBE al puerto: El pin baja a BAJO aquí */               \
-        NOP4 NOP2 NOP1        /* [7 ciclos] Espera mínima en bajo antes de que el loop de C siga */     \
-        ::                                                                                              \
-            "e"(PORT_PTR),    /* %a0: Usa un registro de puntero (X, Y o Z) */                          \
-        "r"(MASK),            /* %1:  Máscara para el OR (poner a 1) */                                 \
-        "r"((uint8_t)~(MASK)) /* %2:  Máscara invertida para el AND (poner a 0) */                      \
-        : "r16")              /* Avisa que usamos r16 para que el compilador no lo use para otra cosa */
+#define NEOPIXEL_SEND_BIT_1(PORT_PTR, MASK)                                                                   \
+    do                                                                                                        \
+    {                                                                                                         \
+        uint8_t tmp;                                                                                          \
+        asm volatile(                                                                                         \
+            "ld   %0, %a1  \n\t"    /* [2 ciclos] Lee el estado actual del puerto desde el puntero */         \
+            "or   %0, %2   \n\t"    /* [1 ciclo]  Pone a '1' el bit correspondiente en el registro r16 */     \
+            "st   %a1, %0  \n\t"    /* [2 ciclos] ESCRIBE al puerto: El pin sube a ALTO aquí */               \
+            NOP8                    /* [8 ciclos] Mantiene el pin en ALTO (Total T1H: 2+1+2+8 = 13 ciclos) */ \
+            "ld   %0, %a1  \n\t"    /* [2 ciclos] Prepara la bajada: Lee el puerto otra vez */                \
+            "and  %0, %3   \n\t"    /* [1 ciclo]  Aplica la máscara invertida (pone el bit en '0') */         \
+            "st   %a1, %0  \n\t"    /* [2 ciclos] ESCRIBE al puerto: El pin baja a BAJO aquí */               \
+            NOP4 NOP2 NOP1          /* [7 ciclos] Espera mínima en bajo antes de que el loop de C siga */     \
+            : "=&r"(tmp)            /* %0: Registro temporal (el compilador elige cuál) */                    \
+            : "e"(PORT_PTR),        /* %a1: Usa un registro de puntero (X, Y o Z) */                          \
+              "r"(MASK),            /* %2:  Máscara para el OR (poner a 1) */                                 \
+              "r"((uint8_t)~(MASK)) /* %3:  Máscara invertida para el AND (poner a 0) */                      \
+        );                                                                                                    \
+    } while (0)
 
 // Macro para enviar un '0' lógico (Pulso Corto en Alto)
-#define NEOPIXEL_SEND_BIT_0(PORT_PTR, MASK)                                                           \
-    asm volatile(                                                                                     \
-        "ld   r16, %a0  \n\t" /* [2 ciclos] Lee puerto */                                             \
-        "or   r16, %1   \n\t" /* [1 ciclo]  Prepara el bit en 1 */                                    \
-        "st   %a0, r16  \n\t" /* [2 ciclos] ESCRIBE al puerto: El pin sube a ALTO aquí */             \
-        NOP1                  /* [1 ciclo]  Espera mínima (Total T0H: 2+1+2+1 = 6 ciclos) */          \
-        "ld   r16, %a0  \n\t" /* [2 ciclos] Prepara la bajada */                                      \
-        "and  r16, %2   \n\t" /* [1 ciclo]  Prepara el bit en 0 */                                    \
-        "st   %a0, r16  \n\t" /* [2 ciclos] ESCRIBE al puerto: El pin baja a BAJO aquí */             \
-        NOP8 NOP4 NOP2        /* [14 ciclos] Mantiene en bajo (T0L) mientras esperamos el sig. bit */ \
-        ::                                                                                            \
-            "e"(PORT_PTR),                                                                            \
-        "r"(MASK),                                                                                    \
-        "r"((uint8_t)~(MASK))                                                                         \
-        : "r16")
+#define NEOPIXEL_SEND_BIT_0(PORT_PTR, MASK)                                                                 \
+    do                                                                                                      \
+    {                                                                                                       \
+        uint8_t tmp;                                                                                        \
+        asm volatile(                                                                                       \
+            "ld   %0, %a1  \n\t"    /* [2 ciclos] Lee puerto */                                             \
+            "or   %0, %2   \n\t"    /* [1 ciclo]  Prepara el bit en 1 */                                    \
+            "st   %a1, %0  \n\t"    /* [2 ciclos] ESCRIBE al puerto: El pin sube a ALTO aquí */             \
+            NOP1                    /* [1 ciclo]  Espera mínima (Total T0H: 2+1+2+1 = 6 ciclos) */          \
+            "ld   %0, %a1  \n\t"    /* [2 ciclos] Prepara la bajada */                                      \
+            "and  %0, %3   \n\t"    /* [1 ciclo]  Prepara el bit en 0 */                                    \
+            "st   %a1, %0  \n\t"    /* [2 ciclos] ESCRIBE al puerto: El pin baja a BAJO aquí */             \
+            NOP8 NOP4 NOP2          /* [14 ciclos] Mantiene en bajo (T0L) mientras esperamos el sig. bit */ \
+            : "=&r"(tmp)            /* %0: Registro temporal */                                             \
+            : "e"(PORT_PTR),        /* %a1: Usa un registro de puntero (X, Y o Z) */                        \
+              "r"(MASK),            /* %2:  Máscara para el OR (poner a 1) */                               \
+              "r"((uint8_t)~(MASK)) /* %3:  Máscara invertida para el AND (poner a 0) */                    \
+        );                                                                                                  \
+    } while (0)
 
 #define NEOPIXEL_SEND_RES(PORT, PIN) \
     do                               \
