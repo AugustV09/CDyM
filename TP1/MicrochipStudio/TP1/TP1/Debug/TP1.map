@@ -261,7 +261,7 @@ END GROUP
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0x4b8
+.text           0x00000000      0x4c4
  *(.vectors)
  .vectors       0x00000000       0x68 D:/Octavio/Microchip Studio for AVR and SAM Devices 7.0.2542/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega328p/avr5/crtatmega328p.o
                 0x00000000                __vector_default
@@ -362,28 +362,28 @@ END GROUP
                 0x000001a4       0x14 HelpersMain/Setup.o
                 0x000001a4                configurarPuertos
  .text.startup.main
-                0x000001b8      0x12a main.o
+                0x000001b8      0x136 main.o
                 0x000001b8                main
  .text.NeoPixelSendColorArray
-                0x000002e2       0xe4 utils/NeoPixelUtils.o
-                0x000002e2                NeoPixelSendColorArray
+                0x000002ee       0xe4 utils/NeoPixelUtils.o
+                0x000002ee                NeoPixelSendColorArray
  .text.libgcc.div
-                0x000003c6       0x1c d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_udivdi3.o)
-                0x000003c6                __umoddi3
-                0x000003ca                __udivdi3
-                0x000003cc                __udivdi3_umoddi3
+                0x000003d2       0x1c d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_udivdi3.o)
+                0x000003d2                __umoddi3
+                0x000003d6                __udivdi3
+                0x000003d8                __udivdi3_umoddi3
  .text.libgcc.div
-                0x000003e2       0xa2 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_udivmod64.o)
-                0x000003e2                __udivmod64
- .text.libgcc   0x00000484       0x18 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_adddi3_s8.o)
-                0x00000484                __adddi3_s8
- .text.libgcc   0x0000049c       0x18 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_cmpdi2_s8.o)
-                0x0000049c                __cmpdi2_s8
-                0x000004b4                . = ALIGN (0x2)
+                0x000003ee       0xa2 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_udivmod64.o)
+                0x000003ee                __udivmod64
+ .text.libgcc   0x00000490       0x18 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_adddi3_s8.o)
+                0x00000490                __adddi3_s8
+ .text.libgcc   0x000004a8       0x18 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_cmpdi2_s8.o)
+                0x000004a8                __cmpdi2_s8
+                0x000004c0                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000004b4        0x0 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_exit.o)
-                0x000004b4                _exit
-                0x000004b4                exit
+ .fini9         0x000004c0        0x0 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_exit.o)
+                0x000004c0                _exit
+                0x000004c0                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -402,11 +402,11 @@ END GROUP
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000004b4        0x4 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_exit.o)
+ .fini0         0x000004c0        0x4 d:/octavio/microchip studio for avr and sam devices 7.0.2542/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_exit.o)
  *(.fini0)
-                0x000004b8                _etext = .
+                0x000004c4                _etext = .
 
-.data           0x00800100        0x0 load address 0x000004b8
+.data           0x00800100        0x0 load address 0x000004c4
                 [!provide]                PROVIDE (__data_start, .)
  *(.data)
  *(.data*)
@@ -430,8 +430,8 @@ END GROUP
                 0x00800102        0x1 Ejercicio3/IncisoD.o
  *(COMMON)
                 0x00800103                PROVIDE (__bss_end, .)
-                0x000004b8                __data_load_start = LOADADDR (.data)
-                0x000004b8                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x000004c4                __data_load_start = LOADADDR (.data)
+                0x000004c4                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800103        0x0
                 [!provide]                PROVIDE (__noinit_start, .)
@@ -550,7 +550,7 @@ END GROUP
  .debug_abbrev  0x000008eb      0x105 main.o
  .debug_abbrev  0x000009f0      0x12b utils/NeoPixelUtils.o
 
-.debug_line     0x00000000      0xa53
+.debug_line     0x00000000      0xa5d
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x134 D:/Octavio/Microchip Studio for AVR and SAM Devices 7.0.2542/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_line    0x00000134       0xc4 Ejercicio1/IncisoA.o
@@ -558,8 +558,8 @@ END GROUP
  .debug_line    0x000002e0      0x150 Ejercicio3/IncisoC.o
  .debug_line    0x00000430      0x118 Ejercicio3/IncisoD.o
  .debug_line    0x00000548       0xd5 HelpersMain/Setup.o
- .debug_line    0x0000061d      0x284 main.o
- .debug_line    0x000008a1      0x1b2 utils/NeoPixelUtils.o
+ .debug_line    0x0000061d      0x28e main.o
+ .debug_line    0x000008ab      0x1b2 utils/NeoPixelUtils.o
 
 .debug_frame    0x00000000      0x14c
  *(.debug_frame)
@@ -589,14 +589,14 @@ END GROUP
  .debug_str     0x0000056c       0x36 utils/NeoPixelUtils.o
                                 0x227 (size before relaxing)
 
-.debug_loc      0x00000000      0x686
+.debug_loc      0x00000000      0x692
  *(.debug_loc)
  .debug_loc     0x00000000       0x28 Ejercicio1/IncisoA.o
  .debug_loc     0x00000028       0x28 Ejercicio1/IncisoB.o
  .debug_loc     0x00000050      0x12e Ejercicio3/IncisoC.o
  .debug_loc     0x0000017e      0x109 Ejercicio3/IncisoD.o
- .debug_loc     0x00000287      0x24d main.o
- .debug_loc     0x000004d4      0x1b2 utils/NeoPixelUtils.o
+ .debug_loc     0x00000287      0x259 main.o
+ .debug_loc     0x000004e0      0x1b2 utils/NeoPixelUtils.o
 
 .debug_macinfo
  *(.debug_macinfo)

@@ -46,7 +46,7 @@
         uint8_t tmp;                                                                                          \
         asm volatile(                                                                                         \
             "ld   %0, %a1  \n\t"    /* [2 ciclos] Lee el estado actual del puerto desde el puntero */         \
-            "or   %0, %2   \n\t"    /* [1 ciclo]  Pone a '1' el bit correspondiente en el registro r16 */     \
+            "or   %0, %2   \n\t"    /* [1 ciclo]  Pone a '1' el bit correspondiente en el registro */         \
             "st   %a1, %0  \n\t"    /* [2 ciclos] ESCRIBE al puerto: El pin sube a ALTO aquí */               \
             NOP8                    /* [8 ciclos] Mantiene el pin en ALTO (Total T1H: 2+1+2+8 = 13 ciclos) */ \
             "ld   %0, %a1  \n\t"    /* [2 ciclos] Prepara la bajada: Lee el puerto otra vez */                \

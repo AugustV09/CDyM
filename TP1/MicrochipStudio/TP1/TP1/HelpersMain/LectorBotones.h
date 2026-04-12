@@ -11,7 +11,7 @@
     {                                             \
         if (memoria && !actual)                   \
         {                                         \
-            bandera = 1;                          \
+            bandera = !bandera;                   \
         }                                         \
         memoria = actual;                         \
     } while (0)
