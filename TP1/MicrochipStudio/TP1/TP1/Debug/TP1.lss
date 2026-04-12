@@ -15,19 +15,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   5 .debug_aranges 000000e0  00000000  00000000  0000059c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000e42  00000000  00000000  0000067c  2**0
+  6 .debug_info   00000e74  00000000  00000000  0000067c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000b0c  00000000  00000000  000014be  2**0
+  7 .debug_abbrev 00000b1b  00000000  00000000  000014f0  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00000a65  00000000  00000000  00001fca  2**0
+  8 .debug_line   00000a53  00000000  00000000  0000200b  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  0000014c  00000000  00000000  00002a30  2**2
+  9 .debug_frame  0000014c  00000000  00000000  00002a60  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000005a2  00000000  00000000  00002b7c  2**0
+ 10 .debug_str    000005a2  00000000  00000000  00002bac  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000686  00000000  00000000  0000311e  2**0
+ 11 .debug_loc    00000686  00000000  00000000  0000314e  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 000000b8  00000000  00000000  000037a4  2**0
+ 12 .debug_ranges 000000a0  00000000  00000000  000037d4  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -93,22 +93,15 @@ Disassembly of section .text:
 void LEDsRotar(volatile uint8_t *port)
 {
   90:	fc 01       	movw	r30, r24
-
-    if (*port & (1 << (TOTAL_LEDS_INDIVIDUALES - 1)))
+	*port = ((*port) << 1) | ((*port) >> 7);
   92:	80 81       	ld	r24, Z
-  94:	87 ff       	sbrs	r24, 7
-  96:	02 c0       	rjmp	.+4      	; 0x9c <LEDsRotar+0xc>
-    {
-        *port = 1;
-  98:	81 e0       	ldi	r24, 0x01	; 1
-  9a:	02 c0       	rjmp	.+4      	; 0xa0 <LEDsRotar+0x10>
-    }
-
-    else
-        *port <<= 1;
-  9c:	80 81       	ld	r24, Z
-  9e:	88 0f       	add	r24, r24
-  a0:	80 83       	st	Z, r24
+  94:	90 81       	ld	r25, Z
+  96:	88 0f       	add	r24, r24
+  98:	99 1f       	adc	r25, r25
+  9a:	99 27       	eor	r25, r25
+  9c:	99 1f       	adc	r25, r25
+  9e:	98 2b       	or	r25, r24
+  a0:	90 83       	st	Z, r25
   a2:	08 95       	ret
 
 000000a4 <LEDsRebote>:
@@ -267,64 +260,59 @@ void NeoPixelRotarSalidaVerdes(volatile uint8_t *port, uint8_t pin)
  152:	0f be       	out	0x3f, r0	; 63
  154:	cd bf       	out	0x3d, r28	; 61
  156:	dc 01       	movw	r26, r24
-    uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
-
-    // Calcula los colores
-    for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
-    {
-        uint8_t g = (i == pos_verde) ? 255 : 0;
- 158:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
- 15c:	fe 01       	movw	r30, r28
- 15e:	31 96       	adiw	r30, 0x01	; 1
     static uint8_t pos_verde = 0;
-
+	pos_verde = (pos_verde + TOTAL_LEDS_NEOPIXEL - 1) % TOTAL_LEDS_NEOPIXEL;
+ 158:	20 91 02 01 	lds	r18, 0x0102	; 0x800102 <pos_verde.1740>
+ 15c:	30 e0       	ldi	r19, 0x00	; 0
+ 15e:	29 5f       	subi	r18, 0xF9	; 249
+ 160:	3f 4f       	sbci	r19, 0xFF	; 255
+ 162:	27 70       	andi	r18, 0x07	; 7
+ 164:	33 27       	eor	r19, r19
+ 166:	82 2f       	mov	r24, r18
+ 168:	20 93 02 01 	sts	0x0102, r18	; 0x800102 <pos_verde.1740>
+ 16c:	fe 01       	movw	r30, r28
+ 16e:	31 96       	adiw	r30, 0x01	; 1
+	
     uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
 
     // Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
- 160:	90 e0       	ldi	r25, 0x00	; 0
- 162:	af 01       	movw	r20, r30
+ 170:	90 e0       	ldi	r25, 0x00	; 0
+ 172:	af 01       	movw	r20, r30
     {
         uint8_t g = (i == pos_verde) ? 255 : 0;
         uint8_t r = 0;
         uint8_t b = 0;
         colores[i * 3 + 0] = g; // G
- 164:	21 e0       	ldi	r18, 0x01	; 1
- 166:	89 13       	cpse	r24, r25
- 168:	20 e0       	ldi	r18, 0x00	; 0
- 16a:	21 95       	neg	r18
- 16c:	20 83       	st	Z, r18
+ 174:	21 e0       	ldi	r18, 0x01	; 1
+ 176:	89 13       	cpse	r24, r25
+ 178:	20 e0       	ldi	r18, 0x00	; 0
+ 17a:	21 95       	neg	r18
+ 17c:	20 83       	st	Z, r18
         colores[i * 3 + 1] = r; // R
- 16e:	11 82       	std	Z+1, r1	; 0x01
+ 17e:	11 82       	std	Z+1, r1	; 0x01
         colores[i * 3 + 2] = b; // B
- 170:	12 82       	std	Z+2, r1	; 0x02
-    static uint8_t pos_verde = 0;
-
+ 180:	12 82       	std	Z+2, r1	; 0x02
+	pos_verde = (pos_verde + TOTAL_LEDS_NEOPIXEL - 1) % TOTAL_LEDS_NEOPIXEL;
+	
     uint8_t colores[TOTAL_LEDS_NEOPIXEL * 3];
 
     // Calcula los colores
     for (uint8_t i = 0; i < TOTAL_LEDS_NEOPIXEL; i++)
- 172:	9f 5f       	subi	r25, 0xFF	; 255
- 174:	33 96       	adiw	r30, 0x03	; 3
- 176:	98 30       	cpi	r25, 0x08	; 8
- 178:	a9 f7       	brne	.-22     	; 0x164 <NeoPixelRotarSalidaVerdes+0x22>
+ 182:	9f 5f       	subi	r25, 0xFF	; 255
+ 184:	33 96       	adiw	r30, 0x03	; 3
+ 186:	98 30       	cpi	r25, 0x08	; 8
+ 188:	a9 f7       	brne	.-22     	; 0x174 <NeoPixelRotarSalidaVerdes+0x32>
         colores[i * 3 + 1] = r; // R
         colores[i * 3 + 2] = b; // B
     }
 
     // Ya calculados los envia
     NeoPixelSendColorArray(port, pin, colores, TOTAL_LEDS_NEOPIXEL);
- 17a:	28 e0       	ldi	r18, 0x08	; 8
- 17c:	cd 01       	movw	r24, r26
- 17e:	0e 94 71 01 	call	0x2e2	; 0x2e2 <NeoPixelSendColorArray>
+ 18a:	28 e0       	ldi	r18, 0x08	; 8
+ 18c:	cd 01       	movw	r24, r26
+ 18e:	0e 94 71 01 	call	0x2e2	; 0x2e2 <NeoPixelSendColorArray>
 
-    pos_verde = (pos_verde + TOTAL_LEDS_NEOPIXEL - 1) % TOTAL_LEDS_NEOPIXEL;
- 182:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <pos_verde.1740>
- 186:	90 e0       	ldi	r25, 0x00	; 0
- 188:	07 96       	adiw	r24, 0x07	; 7
- 18a:	87 70       	andi	r24, 0x07	; 7
- 18c:	99 27       	eor	r25, r25
- 18e:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <pos_verde.1740>
  192:	68 96       	adiw	r28, 0x18	; 24
  194:	0f b6       	in	r0, 0x3f	; 63
  196:	f8 94       	cli
@@ -629,7 +617,7 @@ void NeoPixelSendColorArray(volatile uint8_t *port, const uint8_t pin, const uin
  2ea:	cf 93       	push	r28
  2ec:	df 93       	push	r29
  2ee:	fc 01       	movw	r30, r24
- 2f0:	7a 01       	movw	r14, r20
+ 2f0:	8a 01       	movw	r16, r20
     cli();
  2f2:	f8 94       	cli
     for (uint8_t n = 0; n < cantLeds * 3; n++)
@@ -664,39 +652,39 @@ void NeoPixelSendColorArray(volatile uint8_t *port, const uint8_t pin, const uin
  31e:	0c f0       	brlt	.+2      	; 0x322 <NeoPixelSendColorArray+0x40>
  320:	40 c0       	rjmp	.+128    	; 0x3a2 <NeoPixelSendColorArray+0xc0>
         NEOPIXEL_SEND_PIXEL_BYTE(colores[n], port, pin);
- 322:	e7 01       	movw	r28, r14
+ 322:	e8 01       	movw	r28, r16
  324:	c8 0f       	add	r28, r24
  326:	d9 1f       	adc	r29, r25
  328:	c8 81       	ld	r28, Y
  32a:	d0 e0       	ldi	r29, 0x00	; 0
  32c:	87 e0       	ldi	r24, 0x07	; 7
  32e:	90 e0       	ldi	r25, 0x00	; 0
- 330:	8e 01       	movw	r16, r28
+ 330:	7e 01       	movw	r14, r28
  332:	08 2e       	mov	r0, r24
  334:	02 c0       	rjmp	.+4      	; 0x33a <NeoPixelSendColorArray+0x58>
- 336:	15 95       	asr	r17
- 338:	07 95       	ror	r16
+ 336:	f5 94       	asr	r15
+ 338:	e7 94       	ror	r14
  33a:	0a 94       	dec	r0
  33c:	e2 f7       	brpl	.-8      	; 0x336 <NeoPixelSendColorArray+0x54>
- 33e:	00 ff       	sbrs	r16, 0
+ 33e:	e0 fe       	sbrs	r14, 0
  340:	16 c0       	rjmp	.+44     	; 0x36e <NeoPixelSendColorArray+0x8c>
- 342:	00 81       	ld	r16, Z
- 344:	0a 2b       	or	r16, r26
- 346:	00 83       	st	Z, r16
+ 342:	b0 81       	ld	r27, Z
+ 344:	ba 2b       	or	r27, r26
+ 346:	b0 83       	st	Z, r27
 	...
- 358:	00 81       	ld	r16, Z
- 35a:	04 23       	and	r16, r20
- 35c:	00 83       	st	Z, r16
+ 358:	b0 81       	ld	r27, Z
+ 35a:	b4 23       	and	r27, r20
+ 35c:	b0 83       	st	Z, r27
 	...
  36a:	00 00       	nop
  36c:	15 c0       	rjmp	.+42     	; 0x398 <NeoPixelSendColorArray+0xb6>
- 36e:	00 81       	ld	r16, Z
- 370:	0a 2b       	or	r16, r26
- 372:	00 83       	st	Z, r16
+ 36e:	b0 81       	ld	r27, Z
+ 370:	ba 2b       	or	r27, r26
+ 372:	b0 83       	st	Z, r27
  374:	00 00       	nop
- 376:	00 81       	ld	r16, Z
- 378:	04 23       	and	r16, r20
- 37a:	00 83       	st	Z, r16
+ 376:	b0 81       	ld	r27, Z
+ 378:	b4 23       	and	r27, r20
+ 37a:	b0 83       	st	Z, r27
 	...
  398:	01 97       	sbiw	r24, 0x01	; 1
  39a:	08 f0       	brcs	.+2      	; 0x39e <NeoPixelSendColorArray+0xbc>

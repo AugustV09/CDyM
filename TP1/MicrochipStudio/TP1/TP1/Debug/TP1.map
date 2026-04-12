@@ -528,38 +528,38 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000      0xe42
+.debug_info     0x00000000      0xe74
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0x5f4 D:/Octavio/Microchip Studio for AVR and SAM Devices 7.0.2542/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_info    0x000005f4       0xa2 Ejercicio1/IncisoA.o
  .debug_info    0x00000696       0xb3 Ejercicio1/IncisoB.o
  .debug_info    0x00000749      0x15e Ejercicio3/IncisoC.o
- .debug_info    0x000008a7      0x151 Ejercicio3/IncisoD.o
- .debug_info    0x000009f8       0x82 HelpersMain/Setup.o
- .debug_info    0x00000a7a      0x219 main.o
- .debug_info    0x00000c93      0x1af utils/NeoPixelUtils.o
+ .debug_info    0x000008a7      0x155 Ejercicio3/IncisoD.o
+ .debug_info    0x000009fc       0x82 HelpersMain/Setup.o
+ .debug_info    0x00000a7e      0x219 main.o
+ .debug_info    0x00000c97      0x1dd utils/NeoPixelUtils.o
 
-.debug_abbrev   0x00000000      0xb0c
+.debug_abbrev   0x00000000      0xb1b
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x5a2 D:/Octavio/Microchip Studio for AVR and SAM Devices 7.0.2542/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_abbrev  0x000005a2       0x72 Ejercicio1/IncisoA.o
  .debug_abbrev  0x00000614       0x81 Ejercicio1/IncisoB.o
  .debug_abbrev  0x00000695      0x10a Ejercicio3/IncisoC.o
- .debug_abbrev  0x0000079f       0xfb Ejercicio3/IncisoD.o
- .debug_abbrev  0x0000089a       0x4f HelpersMain/Setup.o
- .debug_abbrev  0x000008e9      0x105 main.o
- .debug_abbrev  0x000009ee      0x11e utils/NeoPixelUtils.o
+ .debug_abbrev  0x0000079f       0xfd Ejercicio3/IncisoD.o
+ .debug_abbrev  0x0000089c       0x4f HelpersMain/Setup.o
+ .debug_abbrev  0x000008eb      0x105 main.o
+ .debug_abbrev  0x000009f0      0x12b utils/NeoPixelUtils.o
 
-.debug_line     0x00000000      0xa65
+.debug_line     0x00000000      0xa53
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x134 D:/Octavio/Microchip Studio for AVR and SAM Devices 7.0.2542/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega328p/avr5/crtatmega328p.o
- .debug_line    0x00000134       0xd0 Ejercicio1/IncisoA.o
- .debug_line    0x00000204       0xe8 Ejercicio1/IncisoB.o
- .debug_line    0x000002ec      0x150 Ejercicio3/IncisoC.o
- .debug_line    0x0000043c      0x11e Ejercicio3/IncisoD.o
- .debug_line    0x0000055a       0xd5 HelpersMain/Setup.o
- .debug_line    0x0000062f      0x284 main.o
- .debug_line    0x000008b3      0x1b2 utils/NeoPixelUtils.o
+ .debug_line    0x00000134       0xc4 Ejercicio1/IncisoA.o
+ .debug_line    0x000001f8       0xe8 Ejercicio1/IncisoB.o
+ .debug_line    0x000002e0      0x150 Ejercicio3/IncisoC.o
+ .debug_line    0x00000430      0x118 Ejercicio3/IncisoD.o
+ .debug_line    0x00000548       0xd5 HelpersMain/Setup.o
+ .debug_line    0x0000061d      0x284 main.o
+ .debug_line    0x000008a1      0x1b2 utils/NeoPixelUtils.o
 
 .debug_frame    0x00000000      0x14c
  *(.debug_frame)
@@ -616,15 +616,15 @@ END GROUP
 .debug_pubtypes
  *(.debug_pubtypes)
 
-.debug_ranges   0x00000000       0xb8
+.debug_ranges   0x00000000       0xa0
  *(.debug_ranges)
  .debug_ranges  0x00000000       0x10 Ejercicio1/IncisoA.o
  .debug_ranges  0x00000010       0x10 Ejercicio1/IncisoB.o
  .debug_ranges  0x00000020       0x28 Ejercicio3/IncisoC.o
- .debug_ranges  0x00000048       0x28 Ejercicio3/IncisoD.o
- .debug_ranges  0x00000070       0x10 HelpersMain/Setup.o
- .debug_ranges  0x00000080       0x10 main.o
- .debug_ranges  0x00000090       0x28 utils/NeoPixelUtils.o
+ .debug_ranges  0x00000048       0x10 Ejercicio3/IncisoD.o
+ .debug_ranges  0x00000058       0x10 HelpersMain/Setup.o
+ .debug_ranges  0x00000068       0x10 main.o
+ .debug_ranges  0x00000078       0x28 utils/NeoPixelUtils.o
 
 .debug_macro
  *(.debug_macro)
