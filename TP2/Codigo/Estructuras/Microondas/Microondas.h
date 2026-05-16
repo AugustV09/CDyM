@@ -23,9 +23,9 @@ enum EstadosPuerta
 
 enum Encendidos
 {
-    ENCENDIDO_MAGNETRON,
-    ENCENDIDO_LUZ,
-    ENCENDIDO_LUZ_TERMINADO,
+    ENCENDIDO_MAGNETRON = (1 << 0),
+    ENCENDIDO_LUZ = (1 << 1),
+    ENCENDIDO_LUZ_TERMINADO = (1 << 2),
 };
 
 struct PuertoPin
