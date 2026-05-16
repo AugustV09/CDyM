@@ -1,9 +1,11 @@
 #ifndef MICROONDAS_H
 #define MICROONDAS_H
 
-#include <stdint.h>
+#include "../Teclas.h"
 
-#include "Teclado.h"
+#include "Errores.h"
+
+#include <stdint.h>
 
 enum EstadosMicroondas
 {
@@ -21,9 +23,9 @@ enum EstadosPuerta
 
 enum Encendidos
 {
-    ENCENDIDO_MAGNETRON = 1 << 0,
-    ENCENDIDO_LUZ = 1 << 1,
-    ENCENDIDO_LUZ_TERMINADO = 1 << 2,
+    ENCENDIDO_MAGNETRON,
+    ENCENDIDO_LUZ,
+    ENCENDIDO_LUZ_TERMINADO,
 };
 
 struct PuertoPin
@@ -40,6 +42,11 @@ struct Microondas
     struct PuertoPin pinMagnetron;
     struct PuertoPin pinLuzInterior;
     struct PuertoPin pinLuzTerminado;
+
+    uint8_t posTimerPantalla;
+    uint16_t tiempoPantalla; // Segundos en pantalla: Si aparece 130 -> 1:30
+    uint16_t tiempoSegundos; // Si aparece 1:30 -> 90 segs
+    uint8_t tiempoSegundosFin;
 };
 
 // Iniciar estructura
@@ -52,21 +59,27 @@ void MicroondasInicializarMicroondas(struct Microondas *self,
 // Cuando se le pasa la tecla ACTUALIZA EL ESTADO NO, (NO!!) LA SALIDA.
 int8_t MicroondasTecladoPresionado(struct Microondas *self, uint8_t tecla);
 
-// Cambios SI O SI, actualiza el estado.
-// El unico que por ahora puede no cambiar es el
-// IntentarInicioCoccion ya que depende del timer que sea mayor a 0.
-
-int8_t MicroondasIntentarVolverIngreso(struct Microondas *self);
-
-int8_t MicroondasIntentarInicioCoccion(struct Microondas *self);
-
-int8_t MicroondasIntentarPausaCoccion(struct Microondas *self);
-
-int8_t MicroondasIntentarFinCoccion(struct Microondas *self);
-
-// Aca se aplican los cambios de estados, la salida
-// termina cambiando, es decir, se encienden los leds y el magnetron
-
+// ACA SE ACTUALIZAN LAS SALIDAS, LOS PINES ACA SON ENERGIZADOS!
 int8_t MicroondasAplicarCambiosDeEstado(const struct Microondas *self);
+
+static inline uint16_t MicroondasObtenerTiempoPantalla(const struct Microondas *self)
+{
+    return self->tiempoPantalla;
+}
+
+static inline uint16_t MicroondasObtenerTiempoSegundos(const struct Microondas *self)
+{
+    return self->tiempoSegundos;
+}
+
+static inline enum EstadosMicroondas MicroondasObtenerEstadoMicroondas(const struct Microondas *self)
+{
+    return self->estadoMicroondas;
+}
+
+static inline enum EstadosPuerta MicroondasObtenerEstadoPuerta(const struct Microondas *self)
+{
+    return self->estadoPuerta;
+}
 
 #endif

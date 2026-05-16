@@ -1,4 +1,4 @@
-#include "config.h"
+#include "main.h"
 
 #include "Microondas.h"
 
@@ -26,16 +26,26 @@ int main(void)
         */
 
         // void leerTeclado(); -> NO EXISTE TODAVIA
-        MicroondasTecladoPresionado(&microondas, teclaPrecionada);
-        MicroondasAplicarCambiosDeEstado(&microondas);
+        // El leer teclado es del teclado...
+
+        // Hacer un IF que sea si hubo pulsacion entonces esto:
+
+        if (MicroondasTecladoPresionado(&microondas, teclaPrecionada) == SIN_ERROR)
+            MicroondasAplicarCambiosDeEstado(&microondas);
 
         // void actualizarDisplay(microondas.tiempo); -> NO EXISTE TODAVIA
+        // El actualizar display NO es del microondas
 
-        /*
-            Ideas del timer:
-            Si esta encendido, es decir se le dio a IniciarClock();
-            Deberia ejecutar cada 1 segundo el ActualizarDisplay();
-            Y cuando detecte que se volvio 0 -> Microondas
-        */
+        // El actualizar display puede ser con el tiempo...
+        // Si salto algun error... mostrarlo hasta que se vuelva a presionar una tecla!!!
+        // Que no sea con timer..., que no sea bueno mostremos el error por 1 segundo
+
+        // Desaparecer ese error del display si:
+        // -> Se presiona cualquier tecla.
+        // -> Si cambio el tiempo del microondas
+        // -> Tipo si el error pasa cuando quedan 00:01 segs cuando pasa a 00:00 el error debe desaparecer
+        // -> Si cambia el estado. Si el error pasa cuando se esta pausado y se pasa a ingeso, el error debe desaparecer
+
+        // CUALQUIER COSA PREGUNTAME!!!
     }
 }

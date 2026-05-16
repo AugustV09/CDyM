@@ -1,5 +1,5 @@
-#ifndef TECLADO_H
-#define TECLADO_H
+#ifndef TECLAS_H
+#define TECLAS_H
 
 #include <stdint.h>
 
@@ -22,13 +22,5 @@ enum Teclas
     TECLA_C,
     TECLA_D,
 };
-
-struct Teclado
-{
-    // Datos como pines y demas
-};
-
-void inicializarTeclado(struct Teclado *self);
-int8_t obtenerTeclaPresionada(struct Teclado *self, uint8_t *tecla);
 
 #endif
