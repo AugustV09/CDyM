@@ -1,7 +1,7 @@
 #include "Microondas.h"
 #include "../Reloj/Reloj.h"
 
-// ─── Helpers de conversión ────────────────────────────────────────────────────
+// --- Helpers de conversión ---------------------------------------------
 
 static const uint16_t POTENCIAS_10[] = {1000, 100, 10, 1};
 
