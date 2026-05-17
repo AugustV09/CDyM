@@ -2,6 +2,27 @@
 
 #include "Microondas.h"
 
+/*
+    Cosas para hacer:
+
+    - Borrar comentarios como este.
+    - Ver que hacer con los "edge cases", ver si existen
+    o ver que queremos hacer nosotros o que quieren ellos.
+
+    - Ej: Cuando finaliza el microondas no puede poner en
+    esos 5 segundos de espera un numero, debe apretar
+    la B larga para volver al inicio.
+    La consigna dice que podemos hacer lo que gustemos...
+
+    - Mostrar el cursos para ver donde esta escribiendo el usuario?
+        La posicion se encuentra en MEF_Microondas.posTimerPantalla
+
+    -Borrar Errores si no los usamos! (Transformar funciones de uint8_t a void)
+
+    Pensa otros ejemplos!!!
+    Agarra el microondas de tu casa y hacelo explotar de pruebas
+*/
+
 int main(void)
 {
 
@@ -12,40 +33,18 @@ int main(void)
     struct PuertoPin luz = {&PORTC, PC4};
     struct PuertoPin alm = {&PORTC, PC5};
 
-    MicroondasInicializarMicroondas(&microondas, mag, luz, alm);
+    Microondas_Init(&microondas, 8, mag, luz, alm); // El numero 8 es {K}
 
     while (1)
     {
-        /*
-            Idea simple:
 
-            1) leer teclado
-            2) ver si se apreto algo
-            3) si se apreto algo, llamar a pulso teclado microondas
-            4) actualizar display
+        // Idea
+        /*
+            Que el sleep se haga y se llame al update en un N tiempo constante
+            {K} <- Numero que esta arriba!
+            Que cada {K} N tiempos signifique un segundo
         */
 
-        // void leerTeclado(); -> NO EXISTE TODAVIA
-        // El leer teclado es del teclado...
-
-        // Hacer un IF que sea si hubo pulsacion entonces esto:
-
-        if (MicroondasTecladoPresionado(&microondas, teclaPrecionada) == SIN_ERROR)
-            MicroondasAplicarCambiosDeEstado(&microondas);
-
-        // void actualizarDisplay(microondas.tiempo); -> NO EXISTE TODAVIA
-        // El actualizar display NO es del microondas
-
-        // El actualizar display puede ser con el tiempo...
-        // Si salto algun error... mostrarlo hasta que se vuelva a presionar una tecla!!!
-        // Que no sea con timer..., que no sea bueno mostremos el error por 1 segundo
-
-        // Desaparecer ese error del display si:
-        // -> Se presiona cualquier tecla.
-        // -> Si cambio el tiempo del microondas
-        // -> Tipo si el error pasa cuando quedan 00:01 segs cuando pasa a 00:00 el error debe desaparecer
-        // -> Si cambia el estado. Si el error pasa cuando se esta pausado y se pasa a ingeso, el error debe desaparecer
-
-        // CUALQUIER COSA PREGUNTAME!!!
+        Microondas_Actualizar(&microondas);
     }
 }
