@@ -416,3 +416,17 @@ void LCD_Update(){
 	LCDhome();
 }
 */
+
+//Outputs string to LCD
+void LCDstringZero(uint8_t* data)	
+{
+register uint8_t i;
+
+	// check to make sure we have a good pointer
+	if (!data) return;
+	// print data until the null terminator is found
+	for(i=0; data[i]; i++)
+	{
+		LCDsendChar(data[i]);
+	}
+}
