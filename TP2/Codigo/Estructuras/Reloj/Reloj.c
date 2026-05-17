@@ -8,6 +8,9 @@
 #define OVERFLOWS_POR_SEGUNDO 61
 
 static volatile uint8_t contador_overflows = 0;
+static volatile uint8_t tick_pendiente = 0; //Nuevo
+static uint8_t overflows_por_tick = OVERFLOWS_POR_SEGUNDO / 8; //Nuevo
+static uint8_t contador_tick = 0; //Nuevo
 static clockCallback callback = NULL;
 static void *contexto_guardado = NULL;
 
@@ -32,8 +35,33 @@ void Reloj_SetFunc(clockCallback funcion, void *contexto)
     contexto_guardado = contexto;
 }
 
+void Reloj_SetTicksPorSegundo(uint8_t ticks) //Nuevo
+{
+    if (ticks == 0)
+        ticks = 1;
+    overflows_por_tick = OVERFLOWS_POR_SEGUNDO / ticks;
+    if (overflows_por_tick == 0)
+        overflows_por_tick = 1;
+}
+
+uint8_t Reloj_HayTick(void) //Nuevo
+{
+    return tick_pendiente;
+}
+
+void Reloj_LimpiarTick(void) //Nuevo
+{
+    tick_pendiente = 0;
+}
+
 ISR(TIMER2_OVF_vect)
 {
+    if (++contador_tick >= overflows_por_tick) //Nuevo
+    {
+        contador_tick = 0;
+        tick_pendiente = 1;
+    }
+
     if (++contador_overflows >= OVERFLOWS_POR_SEGUNDO)
     {
         contador_overflows = 0;
