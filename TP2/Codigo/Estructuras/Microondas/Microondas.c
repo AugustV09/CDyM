@@ -1,50 +1,57 @@
 #include "Microondas.h"
-
 #include "../Errores.h"
-
 #include "../KeyPad/KeyPad.h"
-
 #include "../LCD/lcd.h"
-
+#include "../MEF_Microondas/MEF_Microondas.h"
 #include <stdio.h>
 
 static void formatearTiempo(uint16_t tiempo, uint8_t *out_str)
 {
     uint8_t horas = tiempo / 100;
     uint8_t minutos = tiempo % 100;
-    sprintf(out_str, "%02d:%02d", horas, minutos);
+    sprintf((char *)out_str, "%02d:%02d", horas, minutos);
 }
 
-void Microondas_Init(struct Microondas *self,
-                     uint8_t ticksASegundos,
-                     struct PuertoPin pinMagnetron,
-                     struct PuertoPin pinLuzInterior,
-                     struct PuertoPin pinLuzTerminado)
+void Microondas_Init(uint8_t ticksASegundos)
 {
-    MEF_Microondas_Init(&self->mef,
-                        ticksASegundos,
-                        pinMagnetron,
-                        pinLuzInterior,
-                        pinLuzTerminado);
+    // Inicializa la máquina de estados interna que ahora es estática
+    MEF_Microondas_Init(ticksASegundos);
 }
 
-void Microondas_Actualizar(struct Microondas *self)
+void Microondas_Actualizar(void)
 {
-    // preguntar al teclado si recibio algo
     uint8_t tecla;
     uint8_t error;
 
     if (!KEYPAD_Scan(&tecla))
-        tecla = 0;
+    {
+        tecla = 0; // Si no hay tecla presionada de forma válida, se pasa 0
+    }
 
-    error = MEF_ActualizarEstado(&self->mef, tecla);
-    MEF_ActualizarSalidas(&self->mef);
+    error = MEF_ActualizarEstado(tecla);
+    MEF_ActualizarSalidas();
 
-    uint8_t mostrarDisplay[6]; // 00:00 + null
+    uint8_t mostrarDisplay[6]; // Buffer para "MM:SS" + carácter nulo '\0'
+    formatearTiempo(MEF_GetTiempoPantalla(), mostrarDisplay);
 
-    formatearTiempo(self->mef.tiempoPantalla, mostrarDisplay);
+    LCDcursorOFF();
+    LCDclearAndWriteString((char *)mostrarDisplay);
 
-    // LCD_MostrarString(display, mostrarDisplay);
+    uint8_t posCursor = MEF_GetPosTimerPantalla();
+    uint8_t mostrarCursor = (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_INGRESO) && posCursor <= 3;
 
-    LCDclearAndWriteString(mostrarDisplay);
+    if (!mostrarCursor)
+    {
+        return;
+    }
+
+    // Si la posición del dígito pasa el separador de los dos puntos ':', saltamos ese espacio en el LCD
+    if (posCursor >= 2)
+    {
+        posCursor++;
+    }
+
+    // Ubicar el cursor en la coordenada calculada (columna, fila)
+    LCDGotoXY(posCursor, 0);
+    LCDcursorOn();
 }

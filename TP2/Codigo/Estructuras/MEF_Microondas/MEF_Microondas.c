@@ -1,6 +1,18 @@
 #include "MEF_Microondas.h"
-
+#include <avr/io.h>
 #include "../Errores.h"
+
+#define DD_MAGNETRON DDRB
+#define PUERTO_MAGNETRON PORTB
+#define PIN_MAGNETRON PB5
+
+#define DD_LUZ_INTERIOR DDRC
+#define PUERTO_LUZ_INTERIOR PORTC
+#define PIN_LUZ_INTERIOR PC4
+
+#define DD_LUZ_TERMINADO DDRC
+#define PUERTO_LUZ_TERMINADO PORTC
+#define PIN_LUZ_TERMINADO PC5
 
 enum Encendidos
 {
@@ -9,7 +21,33 @@ enum Encendidos
     ENCENDIDO_LUZ_TERMINADO = (1 << 2),
 };
 
+// Estructuras internas privadas (ya no se exponen en el .h)
+struct TemporizadorTicks
+{
+    uint8_t ticksASegundos;
+    uint8_t ticks;
+    uint16_t tiempoSegundos;
+};
+
+struct EstructuraInternaMEF
+{
+    enum EstadosMicroondas estadoMicroondas;
+    enum EstadosPuerta estadoPuerta;
+    uint8_t posTimerPantalla;
+    uint16_t tiempoPantalla;
+    struct TemporizadorTicks temporizador;
+    struct TemporizadorTicks temporizadorFin;
+};
+
+// INSTANCIA ESTÁTICA ÚNICA DE LA MEF
+static struct EstructuraInternaMEF instancia_mef;
+
 static const uint16_t POTENCIAS_10[] = {1000, 100, 10, 1};
+
+// --- Funciones Getters para que Microondas.c pueda leer los datos necesarios para el LCD ---
+enum EstadosMicroondas MEF_GetEstadoMicroondas(void) { return instancia_mef.estadoMicroondas; }
+uint16_t MEF_GetTiempoPantalla(void) { return instancia_mef.tiempoPantalla; }
+uint8_t MEF_GetPosTimerPantalla(void) { return instancia_mef.posTimerPantalla; }
 
 /* tiempoPantalla (MMSS, ej: 130 = 1:30) → tiempoSegundos (ej: 90) */
 static void TiempoSegundosDesdeTiempoPantalla(uint16_t *tiempoSegundos, uint16_t tiempoPantalla)
@@ -38,103 +76,95 @@ static void TemporizadorTicksDecrementar(struct TemporizadorTicks *self)
     }
 }
 
-static uint8_t MEF_MicroondasSumarTiempo(struct MEF_Microondas *self, uint16_t segundos)
+static uint8_t MEF_MicroondasSumarTiempo(uint16_t segundos)
 {
-    TiempoSegundosDesdeTiempoPantalla(&self->temporizador.tiempoSegundos, self->tiempoPantalla);
-
-    self->temporizador.tiempoSegundos += segundos;
-
-    TiempoPantallaDesdeTiempoSegundos(&self->tiempoPantalla, self->temporizador.tiempoSegundos);
-
+    TiempoSegundosDesdeTiempoPantalla(&instancia_mef.temporizador.tiempoSegundos, instancia_mef.tiempoPantalla);
+    instancia_mef.temporizador.tiempoSegundos += segundos;
+    TiempoPantallaDesdeTiempoSegundos(&instancia_mef.tiempoPantalla, instancia_mef.temporizador.tiempoSegundos);
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasSumarTiempoTecla(struct MEF_Microondas *self, uint8_t tecla)
+static uint8_t MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
 {
-    if (self->estadoMicroondas != MEF_MICROONDAS_INGRESO)
+    if (instancia_mef.estadoMicroondas != MEF_MICROONDAS_INGRESO)
         return ERROR_SUMAR_TIEMPO_CUANDO_ESTA_ANDANDO;
 
-    if (self->posTimerPantalla > 3)
+    if (instancia_mef.posTimerPantalla > 3)
         return ERROR_SUPERAR_TIEMPO_MAXIMO;
 
     uint8_t valorNumerico = tecla - '0';
 
-    if (self->posTimerPantalla == 2 && valorNumerico > 5) // Máx 99:59
+    if (instancia_mef.posTimerPantalla == 2 && valorNumerico > 5) // Máx 99:59
         return ERROR_TIEMPO_INVALIDO;
 
-    self->tiempoPantalla += (uint16_t)valorNumerico * POTENCIAS_10[self->posTimerPantalla];
-    self->posTimerPantalla++;
+    instancia_mef.tiempoPantalla += (uint16_t)valorNumerico * POTENCIAS_10[instancia_mef.posTimerPantalla];
+    instancia_mef.posTimerPantalla++;
 
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasReinicio(struct MEF_Microondas *self)
+static uint8_t MEF_MicroondasReinicio(void)
 {
-    self->estadoMicroondas = MEF_MICROONDAS_INGRESO;
-    self->posTimerPantalla = 0;
-    self->tiempoPantalla = 0;
+    instancia_mef.estadoMicroondas = MEF_MICROONDAS_INGRESO;
+    instancia_mef.posTimerPantalla = 0;
+    instancia_mef.tiempoPantalla = 0;
 
-    self->temporizador.tiempoSegundos = 0;
-    self->temporizadorFin.tiempoSegundos = 0;
+    instancia_mef.temporizador.tiempoSegundos = 0;
+    instancia_mef.temporizadorFin.tiempoSegundos = 0;
 
-    self->temporizador.ticks = 0;
-    self->temporizadorFin.ticks = 0;
+    instancia_mef.temporizador.ticks = 0;
+    instancia_mef.temporizadorFin.ticks = 0;
 
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasIniciarCoccion(struct MEF_Microondas *self)
+static uint8_t MEF_MicroondasIniciarCoccion(void)
 {
-    if (self->tiempoPantalla == 0)
+    if (instancia_mef.tiempoPantalla == 0)
         return ERROR_TIEMPO_INVALIDO;
 
-    if (self->estadoPuerta == MEF_MICROONDAS_PUERTA_ABIERTA)
+    if (instancia_mef.estadoPuerta == MEF_MICROONDAS_PUERTA_ABIERTA)
         return ERROR_INICIAR_MICROONDAS_PUERTA_ABIERTA;
 
-    // Convertir lo que el usuario ingresó en pantalla a segundos reales
-    TiempoSegundosDesdeTiempoPantalla(&self->temporizador.tiempoSegundos, self->tiempoPantalla);
-
-    self->estadoMicroondas = MEF_MICROONDAS_COCINANDO;
+    TiempoSegundosDesdeTiempoPantalla(&instancia_mef.temporizador.tiempoSegundos, instancia_mef.tiempoPantalla);
+    instancia_mef.estadoMicroondas = MEF_MICROONDAS_COCINANDO;
 
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasPausar(struct MEF_Microondas *self)
+static uint8_t MEF_MicroondasPausar(void)
 {
-    self->estadoMicroondas = MEF_MICROONDAS_PAUSADO;
-
+    instancia_mef.estadoMicroondas = MEF_MICROONDAS_PAUSADO;
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasFinalizar(struct MEF_Microondas *self)
+static uint8_t MEF_MicroondasFinalizar(void)
 {
-    self->estadoMicroondas = MEF_MICROONDAS_FIN_COCCION;
-
-    self->temporizadorFin.tiempoSegundos = 5;
-    self->temporizadorFin.ticks = 0;
-
+    instancia_mef.estadoMicroondas = MEF_MICROONDAS_FIN_COCCION;
+    instancia_mef.temporizadorFin.tiempoSegundos = 5;
+    instancia_mef.temporizadorFin.ticks = 0;
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasPuerta(struct MEF_Microondas *self)
+static uint8_t MEF_MicroondasPuerta(void)
 {
-    if (self->estadoPuerta == MEF_MICROONDAS_PUERTA_CERRADA)
+    if (instancia_mef.estadoPuerta == MEF_MICROONDAS_PUERTA_CERRADA)
     {
         uint8_t error = SIN_ERROR;
-        if (self->estadoMicroondas == MEF_MICROONDAS_COCINANDO)
-            error = MEF_MicroondasPausar(self);
+        if (instancia_mef.estadoMicroondas == MEF_MICROONDAS_COCINANDO)
+            error = MEF_MicroondasPausar();
 
-        self->estadoPuerta = MEF_MICROONDAS_PUERTA_ABIERTA;
+        instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_ABIERTA;
         return error;
     }
-
     else
-        self->estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
-
+    {
+        instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
+    }
     return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasIngreso(struct MEF_Microondas *self, uint8_t tecla)
+static uint8_t MEF_MicroondasIngreso(uint8_t tecla)
 {
     switch (tecla)
     {
@@ -148,179 +178,165 @@ static uint8_t MEF_MicroondasIngreso(struct MEF_Microondas *self, uint8_t tecla)
     case '7':
     case '8':
     case '9':
-        return MEF_MicroondasSumarTiempoTecla(self, tecla);
+        return MEF_MicroondasSumarTiempoTecla(tecla);
     case 'A':
-        return MEF_MicroondasIniciarCoccion(self);
+        return MEF_MicroondasIniciarCoccion();
     case 'B':
-        return MEF_MicroondasReinicio(self);
+        return MEF_MicroondasReinicio();
     case 'C':
     {
-        uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
+        uint8_t error = MEF_MicroondasSumarTiempo(30);
         if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion(self);
+            return MEF_MicroondasIniciarCoccion();
         else
             return error;
     }
     case 'D':
-        return MEF_MicroondasPuerta(self);
-
+        return MEF_MicroondasPuerta();
     default:
         return SIN_ERROR;
     }
 }
 
-static uint8_t MEF_MicroondasCocinado(struct MEF_Microondas *self, uint8_t tecla)
+static uint8_t MEF_MicroondasCocinado(uint8_t tecla)
 {
+    TemporizadorTicksDecrementar(&instancia_mef.temporizador);
+    TiempoPantallaDesdeTiempoSegundos(&instancia_mef.tiempoPantalla, instancia_mef.temporizador.tiempoSegundos);
 
-    TemporizadorTicksDecrementar(&self->temporizador);
-    TiempoPantallaDesdeTiempoSegundos(&self->tiempoPantalla, self->temporizador.tiempoSegundos);
-
-    if (self->temporizador.tiempoSegundos == 0)
-        return MEF_MicroondasFinalizar(self);
+    if (instancia_mef.temporizador.tiempoSegundos == 0)
+        return MEF_MicroondasFinalizar();
 
     switch (tecla)
     {
     case 'A':
         return SIN_ERROR;
     case 'B':
-        return MEF_MicroondasPausar(self);
+        return MEF_MicroondasPausar();
     case 'C':
-        return MEF_MicroondasSumarTiempo(self, 30);
+        return MEF_MicroondasSumarTiempo(30);
     case 'D':
-        return MEF_MicroondasPuerta(self);
+        return MEF_MicroondasPuerta();
     default:
         return SIN_ERROR;
-        break;
     }
 }
 
-static uint8_t MEF_MicroondasPausado(struct MEF_Microondas *self, uint8_t tecla)
+static uint8_t MEF_MicroondasPausado(uint8_t tecla)
 {
     switch (tecla)
     {
     case 'A':
-        return MEF_MicroondasIniciarCoccion(self);
+        return MEF_MicroondasIniciarCoccion();
     case 'B':
-        return MEF_MicroondasReinicio(self);
+        return MEF_MicroondasReinicio();
     case 'C':
     {
-        uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
+        uint8_t error = MEF_MicroondasSumarTiempo(30);
         if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion(self);
+            return MEF_MicroondasIniciarCoccion();
         else
             return error;
     }
     case 'D':
-        return MEF_MicroondasPuerta(self);
-
+        return MEF_MicroondasPuerta();
     default:
         return SIN_ERROR;
     }
 }
 
-static uint8_t MEF_MicroondasFin(struct MEF_Microondas *self, uint8_t tecla)
+static uint8_t MEF_MicroondasFin(uint8_t tecla)
 {
+    TemporizadorTicksDecrementar(&instancia_mef.temporizadorFin);
 
-    TemporizadorTicksDecrementar(&self->temporizadorFin);
-
-    if (self->temporizadorFin.tiempoSegundos == 0)
-        return MEF_MicroondasReinicio(self);
+    if (instancia_mef.temporizadorFin.tiempoSegundos == 0)
+        return MEF_MicroondasReinicio();
 
     switch (tecla)
     {
     case 'A':
         return SIN_ERROR;
     case 'B':
-        return MEF_MicroondasReinicio(self);
+        return MEF_MicroondasReinicio();
     case 'C':
     {
-        uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
+        uint8_t error = MEF_MicroondasSumarTiempo(30);
         if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion(self);
+            return MEF_MicroondasIniciarCoccion();
         else
             return error;
     }
     case 'D':
-        return MEF_MicroondasPuerta(self);
-
+        return MEF_MicroondasPuerta();
     default:
         return SIN_ERROR;
     }
 }
 
-static int8_t Encender(const struct MEF_Microondas *self, int8_t encendidos)
+static int8_t Encender(int8_t encendidos)
 {
-    // Magnetrón — PORTB
     if (encendidos & ENCENDIDO_MAGNETRON)
-        *self->pinMagnetron.port |= (1 << self->pinMagnetron.pin);
+        PUERTO_MAGNETRON |= (1 << PIN_MAGNETRON);
     else
-        *self->pinMagnetron.port &= ~(1 << self->pinMagnetron.pin);
+        PUERTO_MAGNETRON &= ~(1 << PIN_MAGNETRON);
 
-    // Luz interior — PORTC
     if (encendidos & ENCENDIDO_LUZ)
-        *self->pinLuzInterior.port |= (1 << self->pinLuzInterior.pin);
+        PUERTO_LUZ_INTERIOR |= (1 << PIN_LUZ_INTERIOR);
     else
-        *self->pinLuzInterior.port &= ~(1 << self->pinLuzInterior.pin);
+        PUERTO_LUZ_INTERIOR &= ~(1 << PIN_LUZ_INTERIOR);
 
-    // Luz terminado — PORTC
     if (encendidos & ENCENDIDO_LUZ_TERMINADO)
-        *self->pinLuzTerminado.port |= (1 << self->pinLuzTerminado.pin);
+        PUERTO_LUZ_TERMINADO |= (1 << PIN_LUZ_TERMINADO);
     else
-        *self->pinLuzTerminado.port &= ~(1 << self->pinLuzTerminado.pin);
+        PUERTO_LUZ_TERMINADO &= ~(1 << PIN_LUZ_TERMINADO);
 
     return SIN_ERROR;
 }
 
-// Lo publico:
+// --- Funciones de la Interfaz Pública ---
 
-void MEF_Microondas_Init(struct MEF_Microondas *self,
-                         uint8_t ticksASegundos,
-                         struct PuertoPin pinMagnetron,
-                         struct PuertoPin pinLuzInterior,
-                         struct PuertoPin pinLuzTerminado)
+void MEF_Microondas_Init(uint8_t ticksASegundos)
 {
-    self->temporizador.ticksASegundos = ticksASegundos;
-    self->temporizadorFin.ticksASegundos = ticksASegundos;
+    instancia_mef.temporizador.ticksASegundos = ticksASegundos;
+    instancia_mef.temporizadorFin.ticksASegundos = ticksASegundos;
 
-    self->pinMagnetron = pinMagnetron;
-    self->pinLuzInterior = pinLuzInterior;
-    self->pinLuzTerminado = pinLuzTerminado;
+    DD_MAGNETRON |= (1 << PIN_MAGNETRON);
+    DD_LUZ_INTERIOR |= (1 << PIN_LUZ_INTERIOR);
+    DD_LUZ_TERMINADO |= (1 << PIN_LUZ_TERMINADO);
 
-    MEF_MicroondasReinicio(self);
+    MEF_MicroondasReinicio();
 
-    self->estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
+    instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
 }
 
-uint8_t MEF_ActualizarEstado(struct MEF_Microondas *self, uint8_t tecla)
+uint8_t MEF_ActualizarEstado(uint8_t tecla)
 {
-
-    switch (self->estadoMicroondas)
+    switch (instancia_mef.estadoMicroondas)
     {
     case MEF_MICROONDAS_INGRESO:
-        return MEF_MicroondasIngreso(self, tecla);
+        return MEF_MicroondasIngreso(tecla);
     case MEF_MICROONDAS_COCINANDO:
-        return MEF_MicroondasCocinado(self, tecla);
+        return MEF_MicroondasCocinado(tecla);
     case MEF_MICROONDAS_PAUSADO:
-        return MEF_MicroondasPausado(self, tecla);
+        return MEF_MicroondasPausado(tecla);
     case MEF_MICROONDAS_FIN_COCCION:
-        return MEF_MicroondasFin(self, tecla);
+        return MEF_MicroondasFin(tecla);
     default:
         return ERROR_ESTADO_DESCONOCIDO;
     }
 }
 
-void MEF_ActualizarSalidas(const struct MEF_Microondas *self)
+void MEF_ActualizarSalidas(void)
 {
     int8_t encendidos;
 
-    switch (self->estadoMicroondas)
+    switch (instancia_mef.estadoMicroondas)
     {
     case MEF_MICROONDAS_COCINANDO:
         encendidos = ENCENDIDO_LUZ | ENCENDIDO_MAGNETRON;
         break;
 
     case MEF_MICROONDAS_FIN_COCCION:
-        encendidos = (self->temporizadorFin.tiempoSegundos % 2) ? ENCENDIDO_LUZ_TERMINADO : 0;
+        encendidos = (instancia_mef.temporizadorFin.tiempoSegundos % 2) ? ENCENDIDO_LUZ_TERMINADO : 0;
         break;
 
     default:
@@ -328,5 +344,5 @@ void MEF_ActualizarSalidas(const struct MEF_Microondas *self)
         break;
     }
 
-    Encender(self, encendidos);
+    Encender(encendidos);
 }

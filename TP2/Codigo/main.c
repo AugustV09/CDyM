@@ -32,15 +32,9 @@
 
 int main(void)
 {
-    struct Microondas microondas;
-    struct PuertoPin mag = {&PORTB, PB5};
-    struct PuertoPin luz = {&PORTC, PC4};
-    struct PuertoPin alm = {&PORTC, PC5};
-
-    Microondas_Init(&microondas, TICKS_A_SEGUNDO, mag, luz, alm);
     LCD_Init();
-
     Reloj_IniciarClock();
+    Microondas_Init(TICKS_A_SEGUNDO);
 
     // Seteamos modo IDLE: apaga clock de CPU pero mantiene Timer2 corriendo
     set_sleep_mode(SLEEP_MODE_IDLE);
@@ -57,7 +51,7 @@ int main(void)
             Reloj_LimpiarTick();
 
             // Actualiza la máquina de estados del microondas (lectura de teclado, LCD, etc.)
-            Microondas_Actualizar(&microondas);
+            Microondas_Actualizar();
         }
     }
 }

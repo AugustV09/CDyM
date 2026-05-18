@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+// Enumeraciones públicas necesarias para otros módulos (ej. el display)
 enum EstadosMicroondas
 {
     MEF_MICROONDAS_INGRESO,
@@ -17,43 +18,14 @@ enum EstadosPuerta
     MEF_MICROONDAS_PUERTA_ABIERTA,
 };
 
-struct PuertoPin
-{
-    volatile uint8_t *port;
-    uint8_t pin;
-};
+// Variables globales expuestas mediante funciones "Getter" (Opcional, pero ideal para el display)
+enum EstadosMicroondas MEF_GetEstadoMicroondas(void);
+uint16_t MEF_GetTiempoPantalla(void);
+uint8_t MEF_GetPosTimerPantalla(void);
 
-struct TemporizadorTicks
-{
-    uint8_t ticksASegundos;
-    uint8_t ticks;
-    uint16_t tiempoSegundos;
-};
-
-struct MEF_Microondas
-{
-    enum EstadosMicroondas estadoMicroondas;
-    enum EstadosPuerta estadoPuerta;
-
-    struct PuertoPin pinMagnetron;
-    struct PuertoPin pinLuzInterior;
-    struct PuertoPin pinLuzTerminado;
-
-    uint8_t posTimerPantalla;
-    uint16_t tiempoPantalla; // Segundos en pantalla: Si aparece 130 -> 1:30
-
-    struct TemporizadorTicks temporizador;
-
-    struct TemporizadorTicks temporizadorFin;
-};
-
-void MEF_Microondas_Init(struct MEF_Microondas *self,
-                         uint8_t ticksASegundos,
-                         struct PuertoPin pinMagnetron,
-                         struct PuertoPin pinLuzInterior,
-                         struct PuertoPin pinLuzTerminado);
-
-uint8_t MEF_ActualizarEstado(struct MEF_Microondas *self, uint8_t tecla);
-void MEF_ActualizarSalidas(const struct MEF_Microondas *self);
+// Interfaz pública simplificada
+void MEF_Microondas_Init(uint8_t ticksASegundos);
+uint8_t MEF_ActualizarEstado(uint8_t tecla);
+void MEF_ActualizarSalidas(void);
 
 #endif
