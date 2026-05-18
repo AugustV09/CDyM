@@ -29,7 +29,6 @@
 int main(void)
 {
 
-    Reloj_IniciarClock();
     Microondas_Init();
 
     // Seteamos modo IDLE: apaga clock de CPU pero mantiene Timer2 corriendo
