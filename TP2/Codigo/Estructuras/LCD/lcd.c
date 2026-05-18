@@ -426,7 +426,6 @@ void LCD_Update(){
 }
 */
 
-// Outputs string to LCD
 void LCDstringZero(const uint8_t *data)
 {
 	register uint8_t i;

@@ -1,20 +1,5 @@
 #include "MEF_Microondas.h"
 #include <avr/io.h>
-#include "../Errores.h"
-
-#define DD_MAGNETRON DDRB
-#define PUERTO_MAGNETRON PORTB
-#define PIN_MAGNETRON PB5
-
-#define DD_LUZ_INTERIOR DDRC
-#define PUERTO_LUZ_INTERIOR PORTC
-#define PIN_LUZ_INTERIOR PC4
-
-#define DD_LUZ_TERMINADO DDRC
-#define PUERTO_LUZ_TERMINADO PORTC
-#define PIN_LUZ_TERMINADO PC5
-
-#define MAX_TIME (99 * 60 + 99)
 
 enum Encendidos
 {
@@ -78,7 +63,7 @@ static void TemporizadorTicksDecrementar(struct TemporizadorTicks *self)
     }
 }
 
-static uint8_t MEF_MicroondasSumarTiempo(uint16_t segundos)
+static void MEF_MicroondasSumarTiempo(uint16_t segundos)
 {
     TiempoSegundosDesdeTiempoPantalla(&instancia_mef.temporizador.tiempoSegundos, instancia_mef.tiempoPantalla);
 
@@ -88,28 +73,25 @@ static uint8_t MEF_MicroondasSumarTiempo(uint16_t segundos)
         instancia_mef.temporizador.tiempoSegundos = MAX_TIME;
 
     TiempoPantallaDesdeTiempoSegundos(&instancia_mef.tiempoPantalla, instancia_mef.temporizador.tiempoSegundos);
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
+static void MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
 {
     if (instancia_mef.estadoMicroondas != MEF_MICROONDAS_INGRESO)
-        return ERROR_SUMAR_TIEMPO_CUANDO_ESTA_ANDANDO;
+        return;
 
     // Si ya tiene 4 dígitos (ej: 9999), cualquier otra tecla lo pasaría a 5 dígitos.
     // El máximo valor representable en el display será 9999.
     if (instancia_mef.tiempoPantalla >= 1000)
-        return ERROR_SUPERAR_TIEMPO_MAXIMO;
+        return;
 
     uint8_t valorNumerico = tecla - '0';
 
     // Desplazamiento clásico hacia la izquierda
     instancia_mef.tiempoPantalla = (instancia_mef.tiempoPantalla * 10) + valorNumerico;
-
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasReinicio(void)
+static void MEF_MicroondasReinicio(void)
 {
     instancia_mef.estadoMicroondas = MEF_MICROONDAS_INGRESO;
     instancia_mef.tiempoPantalla = 0;
@@ -119,57 +101,48 @@ static uint8_t MEF_MicroondasReinicio(void)
 
     instancia_mef.temporizador.ticks = 0;
     instancia_mef.temporizadorFin.ticks = 0;
-
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasIniciarCoccion(void)
+static void MEF_MicroondasIniciarCoccion(void)
 {
     if (instancia_mef.tiempoPantalla == 0)
-        return ERROR_TIEMPO_INVALIDO;
+        return;
 
     if (instancia_mef.estadoPuerta == MEF_MICROONDAS_PUERTA_ABIERTA)
-        return ERROR_INICIAR_MICROONDAS_PUERTA_ABIERTA;
+        return;
 
     TiempoSegundosDesdeTiempoPantalla(&instancia_mef.temporizador.tiempoSegundos, instancia_mef.tiempoPantalla);
     instancia_mef.estadoMicroondas = MEF_MICROONDAS_COCINANDO;
-
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasPausar(void)
+static void MEF_MicroondasPausar(void)
 {
     instancia_mef.estadoMicroondas = MEF_MICROONDAS_PAUSADO;
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasFinalizar(void)
+static void MEF_MicroondasFinalizar(void)
 {
     instancia_mef.estadoMicroondas = MEF_MICROONDAS_FIN_COCCION;
     instancia_mef.temporizadorFin.tiempoSegundos = 5;
     instancia_mef.temporizadorFin.ticks = 0;
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasPuerta(void)
+static void MEF_MicroondasPuerta(void)
 {
     if (instancia_mef.estadoPuerta == MEF_MICROONDAS_PUERTA_CERRADA)
     {
-        uint8_t error = SIN_ERROR;
         if (instancia_mef.estadoMicroondas == MEF_MICROONDAS_COCINANDO)
-            error = MEF_MicroondasPausar();
+            MEF_MicroondasPausar();
 
         instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_ABIERTA;
-        return error;
     }
     else
     {
         instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
     }
-    return SIN_ERROR;
 }
 
-static uint8_t MEF_MicroondasIngreso(uint8_t tecla)
+static void MEF_MicroondasIngreso(uint8_t tecla)
 {
     switch (tecla)
     {
@@ -183,101 +156,108 @@ static uint8_t MEF_MicroondasIngreso(uint8_t tecla)
     case '7':
     case '8':
     case '9':
-        return MEF_MicroondasSumarTiempoTecla(tecla);
+        MEF_MicroondasSumarTiempoTecla(tecla);
+        break;
     case 'A':
-        return MEF_MicroondasIniciarCoccion();
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'B':
-        return MEF_MicroondasReinicio();
+        MEF_MicroondasReinicio();
+        break;
     case 'C':
-    {
-        uint8_t error = MEF_MicroondasSumarTiempo(30);
-        if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion();
-        else
-            return error;
-    }
+        MEF_MicroondasSumarTiempo(30);
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'D':
-        return MEF_MicroondasPuerta();
+        MEF_MicroondasPuerta();
+        break;
     default:
-        return SIN_ERROR;
+        break;
     }
 }
 
-static uint8_t MEF_MicroondasCocinado(uint8_t tecla)
+static void MEF_MicroondasCocinado(uint8_t tecla)
 {
     TemporizadorTicksDecrementar(&instancia_mef.temporizador);
     TiempoPantallaDesdeTiempoSegundos(&instancia_mef.tiempoPantalla, instancia_mef.temporizador.tiempoSegundos);
 
     if (instancia_mef.temporizador.tiempoSegundos == 0)
-        return MEF_MicroondasFinalizar();
+    {
+        MEF_MicroondasFinalizar();
+        return;
+    }
 
     switch (tecla)
     {
     case 'A':
-        return SIN_ERROR;
+        break;
     case 'B':
-        return MEF_MicroondasPausar();
+        MEF_MicroondasPausar();
+        break;
     case 'C':
-        return MEF_MicroondasSumarTiempo(30);
+        MEF_MicroondasSumarTiempo(30);
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'D':
-        return MEF_MicroondasPuerta();
+        MEF_MicroondasPuerta();
+        break;
     default:
-        return SIN_ERROR;
+        break;
     }
 }
 
-static uint8_t MEF_MicroondasPausado(uint8_t tecla)
+static void MEF_MicroondasPausado(uint8_t tecla)
 {
     switch (tecla)
     {
     case 'A':
-        return MEF_MicroondasIniciarCoccion();
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'B':
-        return MEF_MicroondasReinicio();
+        MEF_MicroondasReinicio();
+        break;
     case 'C':
-    {
-        uint8_t error = MEF_MicroondasSumarTiempo(30);
-        if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion();
-        else
-            return error;
-    }
+        MEF_MicroondasSumarTiempo(30);
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'D':
-        return MEF_MicroondasPuerta();
+        MEF_MicroondasPuerta();
+        break;
     default:
-        return SIN_ERROR;
+        break;
     }
 }
 
-static uint8_t MEF_MicroondasFin(uint8_t tecla)
+static void MEF_MicroondasFin(uint8_t tecla)
 {
     TemporizadorTicksDecrementar(&instancia_mef.temporizadorFin);
 
     if (instancia_mef.temporizadorFin.tiempoSegundos == 0)
-        return MEF_MicroondasReinicio();
+    {
+        MEF_MicroondasReinicio();
+        return;
+    }
 
     switch (tecla)
     {
     case 'A':
-        return SIN_ERROR;
+        break;
     case 'B':
-        return MEF_MicroondasReinicio();
+        MEF_MicroondasReinicio();
+        break;
     case 'C':
-    {
-        uint8_t error = MEF_MicroondasSumarTiempo(30);
-        if (error == SIN_ERROR)
-            return MEF_MicroondasIniciarCoccion();
-        else
-            return error;
-    }
+        MEF_MicroondasSumarTiempo(30);
+        MEF_MicroondasIniciarCoccion();
+        break;
     case 'D':
-        return MEF_MicroondasPuerta();
+        MEF_MicroondasPuerta();
+        break;
     default:
-        return SIN_ERROR;
+        break;
     }
 }
 
-static int8_t Encender(int8_t encendidos)
+static void Encender(int8_t encendidos)
 {
     if (encendidos & ENCENDIDO_MAGNETRON)
         PUERTO_MAGNETRON |= (1 << PIN_MAGNETRON);
@@ -293,8 +273,6 @@ static int8_t Encender(int8_t encendidos)
         PUERTO_LUZ_TERMINADO |= (1 << PIN_LUZ_TERMINADO);
     else
         PUERTO_LUZ_TERMINADO &= ~(1 << PIN_LUZ_TERMINADO);
-
-    return SIN_ERROR;
 }
 
 // --- Interfaz Pública ---
@@ -314,20 +292,24 @@ void MEF_Microondas_Init(void)
     instancia_mef.estadoPuerta = MEF_MICROONDAS_PUERTA_CERRADA;
 }
 
-uint8_t MEF_ActualizarEstado(uint8_t tecla)
+void MEF_ActualizarEstado(uint8_t tecla)
 {
     switch (instancia_mef.estadoMicroondas)
     {
     case MEF_MICROONDAS_INGRESO:
-        return MEF_MicroondasIngreso(tecla);
+        MEF_MicroondasIngreso(tecla);
+        break;
     case MEF_MICROONDAS_COCINANDO:
-        return MEF_MicroondasCocinado(tecla);
+        MEF_MicroondasCocinado(tecla);
+        break;
     case MEF_MICROONDAS_PAUSADO:
-        return MEF_MicroondasPausado(tecla);
+        MEF_MicroondasPausado(tecla);
+        break;
     case MEF_MICROONDAS_FIN_COCCION:
-        return MEF_MicroondasFin(tecla);
+        MEF_MicroondasFin(tecla);
+        break;
     default:
-        return ERROR_ESTADO_DESCONOCIDO;
+        break;
     }
 }
 

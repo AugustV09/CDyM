@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include "KeyPad.h"
 
-// Las variables a continuación son las que se deben modificar en caso de cambiar el teclado de acuerdo a como se haya modificado KeyPad.h
+// Las variables a continuación son las que se deben modificar
+// en caso de cambiar el teclado de acuerdo a como se haya modificado KeyPad.h
+// Debe estar en el orden, de izquierda a derecha y de arriba a abajo.
 
 static const uint8_t KEYPAD_MAP[KEYPAD_KEY_COUNT] = {
     '1',
@@ -43,6 +45,8 @@ static volatile uint8_t *const columna_port[CANT_COLUMNAS] = {
 
 static const uint8_t columna_id[CANT_COLUMNAS] = {
     COLUMNA_0_ID, COLUMNA_1_ID, COLUMNA_2_ID, COLUMNA_3_ID};
+
+// Helper de funcion
 
 static uint8_t KEYPAD_Update(void)
 {

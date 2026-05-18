@@ -1,5 +1,4 @@
 #include "Microondas.h"
-#include "../Errores.h"
 #include "../KeyPad/KeyPad.h"
 #include "../LCD/lcd.h"
 #include "../MEF_Microondas/MEF_Microondas.h"

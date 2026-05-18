@@ -105,8 +105,18 @@ void LCDprogressBar(uint8_t progress, uint8_t maxprogress, uint8_t length);
 void LCD_Init();
 void LCD_Update();
 
-// Extra Functions created by Group 5
-void LCDstringZero(const uint8_t *);								 // Outputs string to LCD until the null terminator is found
-void LCDWriteString(const uint8_t *, uint8_t columna, uint8_t fila); //	Outputs string to LCD after cleaning the display
+// Funciones extras del grupo 5
+
+/*
+ * Escribe todo el string brindado.
+ * Debe terminar en \0 (null)
+ */
+void LCDstringZero(const uint8_t *);
+
+/*
+ * Escribe todo el string brindado, empieza a escribir desde, columna c, fila f.
+ * Debe terminar en \0 (null)
+ */
+void LCDWriteString(const uint8_t *, uint8_t columna, uint8_t fila);
 
 #endif
