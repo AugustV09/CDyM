@@ -1,0 +1,10 @@
+TODO LO QUE ESTA ACA DEBE SER LEIDO Y VERIFICADO ANTES DE LA ENTREGA
+
+- Borrar comentarios
+- Ver como hacer los includes
+- Ver como se hacen los #DEFINES bien hechos para modificacion
+- Ver los errores
+- La pantalla solo escribimos los numero? Ponemos el cursor? Ponemos que parpadee? Ponemos los errores?
+- Pasar el microondas de struct a static. Ordenar los inits
+
+CONTINUAR!

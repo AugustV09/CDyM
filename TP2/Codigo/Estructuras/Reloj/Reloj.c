@@ -4,10 +4,14 @@
 
 // 5 ms base con Prescaler 1024 a 16MHz => OCR2A = 77
 #define VALOR_COMPARE_MATCH 77
-// Para llegar a 25ms (40 ticks por segundo), necesitamos 5 pasos de 5ms
-#define INTERRUPCIONES_POR_TICK 5
-// Para llegar a un segundo entero, necesitamos 40 ticks
+#define MS_INTERRUPCION 5
 #define TICKS_POR_SEGUNDO 40
+#define MS_POR_TICK (1000 / TICKS_POR_SEGUNDO)
+
+// Para llegar a 25ms (40 ticks por segundo), necesitamos 5 pasos de 5ms
+
+#define INTERRUPCIONES_POR_TICK (MS_POR_TICK / MS_INTERRUPCION)
+// Para llegar a un segundo entero, necesitamos 40 ticks
 
 static volatile uint8_t tick_pendiente = 0;
 static volatile uint8_t contador_interrupciones = 0;
@@ -62,6 +66,10 @@ ISR(TIMER2_COMPA_vect)
         {
             contador_ticks_segundo = 0;
             // Acá adentro podés ejecutar un flag de segundo si la MEF lo prefiere
+
+            /*
+            BORRAR QUEQUE SI LA MEF NO DEBE CONTAR LOS TICKS!
+            */
         }
     }
 }
