@@ -7,8 +7,6 @@
 #include "lcd.h"
 #include "Reloj.h"
 
-#define TICKS_A_SEGUNDO 40 //{K} es 40
-
 /*
     Cosas para hacer:
 
@@ -34,7 +32,7 @@ int main(void)
 {
     LCD_Init();
     Reloj_IniciarClock();
-    Microondas_Init(TICKS_A_SEGUNDO);
+    Microondas_Init();
 
     // Seteamos modo IDLE: apaga clock de CPU pero mantiene Timer2 corriendo
     set_sleep_mode(SLEEP_MODE_IDLE);

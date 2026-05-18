@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-// Enumeraciones públicas necesarias para otros módulos (ej. el display)
+#define TICKS_POR_SEGUNDOS 40
+
 enum EstadosMicroondas
 {
     MEF_MICROONDAS_INGRESO,
@@ -18,13 +19,13 @@ enum EstadosPuerta
     MEF_MICROONDAS_PUERTA_ABIERTA,
 };
 
-// Variables globales expuestas mediante funciones "Getter" (Opcional, pero ideal para el display)
+// Getters públicos para el LCD
 enum EstadosMicroondas MEF_GetEstadoMicroondas(void);
 uint16_t MEF_GetTiempoPantalla(void);
 uint8_t MEF_GetPosTimerPantalla(void);
 
-// Interfaz pública simplificada
-void MEF_Microondas_Init(uint8_t ticksASegundos);
+// Interfaz pública (Ya no requiere parámetros)
+void MEF_Microondas_Init(void);
 uint8_t MEF_ActualizarEstado(uint8_t tecla);
 void MEF_ActualizarSalidas(void);
 

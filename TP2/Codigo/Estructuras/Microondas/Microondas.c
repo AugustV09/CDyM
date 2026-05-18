@@ -12,10 +12,10 @@ static void formatearTiempo(uint16_t tiempo, uint8_t *out_str)
     sprintf((char *)out_str, "%02d:%02d", horas, minutos);
 }
 
-void Microondas_Init(uint8_t ticksASegundos)
+void Microondas_Init(void)
 {
-    // Inicializa la máquina de estados interna que ahora es estática
-    MEF_Microondas_Init(ticksASegundos);
+    // Ya no arrastra parámetros desde el main
+    MEF_Microondas_Init();
 }
 
 void Microondas_Actualizar(void)
@@ -25,13 +25,13 @@ void Microondas_Actualizar(void)
 
     if (!KEYPAD_Scan(&tecla))
     {
-        tecla = 0; // Si no hay tecla presionada de forma válida, se pasa 0
+        tecla = 0;
     }
 
     error = MEF_ActualizarEstado(tecla);
     MEF_ActualizarSalidas();
 
-    uint8_t mostrarDisplay[6]; // Buffer para "MM:SS" + carácter nulo '\0'
+    uint8_t mostrarDisplay[6];
     formatearTiempo(MEF_GetTiempoPantalla(), mostrarDisplay);
 
     LCDcursorOFF();
@@ -40,18 +40,22 @@ void Microondas_Actualizar(void)
     uint8_t posCursor = MEF_GetPosTimerPantalla();
     uint8_t mostrarCursor = (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_INGRESO) && posCursor <= 3;
 
+    if (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_FIN_COCCION)
+    {
+        LCDblank();
+        return;
+    }
+
     if (!mostrarCursor)
     {
         return;
     }
 
-    // Si la posición del dígito pasa el separador de los dos puntos ':', saltamos ese espacio en el LCD
     if (posCursor >= 2)
     {
         posCursor++;
     }
 
-    // Ubicar el cursor en la coordenada calculada (columna, fila)
     LCDGotoXY(posCursor, 0);
     LCDcursorOn();
 }

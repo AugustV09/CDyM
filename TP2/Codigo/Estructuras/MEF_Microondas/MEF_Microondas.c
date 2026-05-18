@@ -21,7 +21,6 @@ enum Encendidos
     ENCENDIDO_LUZ_TERMINADO = (1 << 2),
 };
 
-// Estructuras internas privadas (ya no se exponen en el .h)
 struct TemporizadorTicks
 {
     uint8_t ticksASegundos;
@@ -39,17 +38,13 @@ struct EstructuraInternaMEF
     struct TemporizadorTicks temporizadorFin;
 };
 
-// INSTANCIA ESTÁTICA ÚNICA DE LA MEF
 static struct EstructuraInternaMEF instancia_mef;
-
 static const uint16_t POTENCIAS_10[] = {1000, 100, 10, 1};
 
-// --- Funciones Getters para que Microondas.c pueda leer los datos necesarios para el LCD ---
 enum EstadosMicroondas MEF_GetEstadoMicroondas(void) { return instancia_mef.estadoMicroondas; }
 uint16_t MEF_GetTiempoPantalla(void) { return instancia_mef.tiempoPantalla; }
 uint8_t MEF_GetPosTimerPantalla(void) { return instancia_mef.posTimerPantalla; }
 
-/* tiempoPantalla (MMSS, ej: 130 = 1:30) → tiempoSegundos (ej: 90) */
 static void TiempoSegundosDesdeTiempoPantalla(uint16_t *tiempoSegundos, uint16_t tiempoPantalla)
 {
     uint16_t minutos = tiempoPantalla / 100;
@@ -57,7 +52,6 @@ static void TiempoSegundosDesdeTiempoPantalla(uint16_t *tiempoSegundos, uint16_t
     *tiempoSegundos = (uint16_t)(minutos * 60u + segundos);
 }
 
-/* tiempoSegundos → tiempoPantalla (MMSS) */
 static void TiempoPantallaDesdeTiempoSegundos(uint16_t *tiempoPantalla, uint16_t tiempoSegundos)
 {
     uint32_t minutos = tiempoSegundos / 60;
@@ -94,7 +88,7 @@ static uint8_t MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
 
     uint8_t valorNumerico = tecla - '0';
 
-    if (instancia_mef.posTimerPantalla == 2 && valorNumerico > 5) // Máx 99:59
+    if (instancia_mef.posTimerPantalla == 2 && valorNumerico > 5)
         return ERROR_TIEMPO_INVALIDO;
 
     instancia_mef.tiempoPantalla += (uint16_t)valorNumerico * POTENCIAS_10[instancia_mef.posTimerPantalla];
@@ -292,12 +286,13 @@ static int8_t Encender(int8_t encendidos)
     return SIN_ERROR;
 }
 
-// --- Funciones de la Interfaz Pública ---
+// --- Interfaz Pública ---
 
-void MEF_Microondas_Init(uint8_t ticksASegundos)
+void MEF_Microondas_Init(void)
 {
-    instancia_mef.temporizador.ticksASegundos = ticksASegundos;
-    instancia_mef.temporizadorFin.ticksASegundos = ticksASegundos;
+    // Usamos el define para cargar la configuración de los timers internos
+    instancia_mef.temporizador.ticksASegundos = TICKS_POR_SEGUNDOS;
+    instancia_mef.temporizadorFin.ticksASegundos = TICKS_POR_SEGUNDOS;
 
     DD_MAGNETRON |= (1 << PIN_MAGNETRON);
     DD_LUZ_INTERIOR |= (1 << PIN_LUZ_INTERIOR);
