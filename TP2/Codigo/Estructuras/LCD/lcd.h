@@ -107,5 +107,6 @@ void LCD_Update();
 
 //Extra Functions created by Group 5
 void LCDstringZero(uint8_t *);                           // Outputs string to LCD until the null terminator is found
+void LCDclearAndWriteString(uint8_t *);					 //	Outputs string to LCD after cleaning the display
 
 #endif

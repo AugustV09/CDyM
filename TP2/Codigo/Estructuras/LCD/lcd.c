@@ -430,3 +430,11 @@ register uint8_t i;
 		LCDsendChar(data[i]);
 	}
 }
+
+void LCDclearAndWriteString(uint8_t* data)	
+{
+	LCDclr();
+	LCDhome();
+	LCDGotoXY(0,0);
+	LCDstringZero(data);
+}
