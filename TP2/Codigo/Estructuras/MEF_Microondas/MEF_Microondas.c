@@ -14,6 +14,8 @@
 #define PUERTO_LUZ_TERMINADO PORTC
 #define PIN_LUZ_TERMINADO PC5
 
+#define MAX_TIME (99 * 60 + 99)
+
 enum Encendidos
 {
     ENCENDIDO_MAGNETRON = (1 << 0),
@@ -79,7 +81,12 @@ static void TemporizadorTicksDecrementar(struct TemporizadorTicks *self)
 static uint8_t MEF_MicroondasSumarTiempo(uint16_t segundos)
 {
     TiempoSegundosDesdeTiempoPantalla(&instancia_mef.temporizador.tiempoSegundos, instancia_mef.tiempoPantalla);
+
     instancia_mef.temporizador.tiempoSegundos += segundos;
+
+    if (instancia_mef.temporizador.tiempoSegundos > MAX_TIME)
+        instancia_mef.temporizador.tiempoSegundos = MAX_TIME;
+
     TiempoPantallaDesdeTiempoSegundos(&instancia_mef.tiempoPantalla, instancia_mef.temporizador.tiempoSegundos);
     return SIN_ERROR;
 }
@@ -346,7 +353,7 @@ void MEF_ActualizarSalidas(void)
     Encender(encendidos);
 }
 
-uint8_t MEF_ObtenerSegundosRestantes(void)
+uint16_t MEF_ObtenerSegundosRestantes(void)
 {
     switch (instancia_mef.estadoMicroondas)
     {

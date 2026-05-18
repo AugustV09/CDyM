@@ -27,6 +27,6 @@ uint16_t MEF_GetTiempoPantalla(void);
 void MEF_Microondas_Init(void);
 uint8_t MEF_ActualizarEstado(uint8_t tecla);
 void MEF_ActualizarSalidas(void);
-uint8_t MEF_ObtenerSegundosRestantes();
+uint16_t MEF_ObtenerSegundosRestantes();
 
 #endif
