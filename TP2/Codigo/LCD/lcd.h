@@ -107,15 +107,19 @@ void LCD_Update();
 
 // Funciones extras del grupo 5
 
-/*
- * Escribe todo el string brindado.
- * Debe terminar en \0 (null)
+/**
+ * @brief Escribe todo el string brindado.
+ * @param [in] string El string a escribir.
+ * @note Debe terminar en \0 (null).
  */
 void LCDstringZero(const uint8_t *);
 
-/*
- * Escribe todo el string brindado, empieza a escribir desde, columna c, fila f.
- * Debe terminar en \0 (null)
+/**
+ * @brief Escribe todo el string brindado, empieza a escribir desde, columna c, fila f.
+ * @param [in] string El string a escribir.
+ * @param [in] columna Columna donde empieza a escribir.
+ * @param [in] fila Fila donde empieza a escribir.
+ * @note Debe terminar en \0 (null).
  */
 void LCDWriteString(const uint8_t *, uint8_t columna, uint8_t fila);
 

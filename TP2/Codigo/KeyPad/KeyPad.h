@@ -137,7 +137,7 @@ Continuarlo
 
 /**
  * @brief Scanea el teclado y devuelve la tecla pulsada
- * @param tecla Puntero a la tecla pulsada
+ * @param [in] tecla Puntero a la tecla pulsada
  * @return 1 si se pulsó una tecla, 0 en caso contrario
  */
 

@@ -2,10 +2,8 @@
 
 #include <avr/sleep.h>
 
-#include "Estructuras/LCD/lcd.h"
-#include "Microondas.h"
-#include "lcd.h"
-#include "Reloj.h"
+#include "MEF_Microondas/MEF_Microondas.h"
+#include "Reloj/Reloj.h"
 
 /*
     Cosas para hacer:
@@ -30,8 +28,7 @@
 
 int main(void)
 {
-    LCD_Init();
-    LCDcursorOFF();
+
     Reloj_IniciarClock();
     Microondas_Init();
 
