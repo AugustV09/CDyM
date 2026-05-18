@@ -9,6 +9,4 @@
 #define F_CPU 16000000UL
 #include <util/delay.h>
 
-#include "TP2_LCD_libs/lcd.h"
-
 #endif

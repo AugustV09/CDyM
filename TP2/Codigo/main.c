@@ -7,8 +7,7 @@
 #include "lcd.h"
 #include "Reloj.h"
 
-#define TICKS_A_SEGUNDO 8 //{K} es 8
-
+#define TICKS_A_SEGUNDO 40 //{K} es 40
 
 /*
     Cosas para hacer:
@@ -33,35 +32,32 @@
 
 int main(void)
 {
-
-    uint8_t teclaPrecionada;
     struct Microondas microondas;
-    // Definición de pines según consigna
     struct PuertoPin mag = {&PORTB, PB5};
     struct PuertoPin luz = {&PORTC, PC4};
     struct PuertoPin alm = {&PORTC, PC5};
 
     Microondas_Init(&microondas, TICKS_A_SEGUNDO, mag, luz, alm);
     LCD_Init();
-    Reloj_IniciarClock();
-    Reloj_SetTicksPorSegundo(TICKS_A_SEGUNDO); //Nuevo
 
+    Reloj_IniciarClock();
+
+    // Seteamos modo IDLE: apaga clock de CPU pero mantiene Timer2 corriendo
     set_sleep_mode(SLEEP_MODE_IDLE);
     sleep_enable();
 
     while (1)
     {
-        
-        // Idea
-        /*
-            Que el sleep se haga y se llame al update en un N tiempo constante
-            {K} <- Numero que esta arriba!
-            Que cada {K} N tiempos signifique un segundo
-        */
-        while (!Reloj_HayTick()) //Nuevo
-            sleep_cpu();
+        // Se duerme acá. La interrupción de 5ms lo va a despertar.
+        sleep_cpu();
 
-        Reloj_LimpiarTick(); //Nuevo
-        Microondas_Actualizar(&microondas);
+        // Al despertar, verificamos si realmente pasaron los 25ms del tick
+        if (Reloj_HayTick())
+        {
+            Reloj_LimpiarTick();
+
+            // Actualiza la máquina de estados del microondas (lectura de teclado, LCD, etc.)
+            Microondas_Actualizar(&microondas);
+        }
     }
 }

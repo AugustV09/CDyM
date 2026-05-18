@@ -1,71 +1,67 @@
 #include "Reloj.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <stddef.h>
 
-// Con F_CPU=16MHz y prescaler 1024, Timer2 (8 bits) desborda cada:
-// 256 * 1024 / 16.000.000 ≈ 16.384 ms → ~61 overflows por segundo
-#define OVERFLOWS_POR_SEGUNDO 61
+// 5 ms base con Prescaler 1024 a 16MHz => OCR2A = 77
+#define VALOR_COMPARE_MATCH 77
+// Para llegar a 25ms (40 ticks por segundo), necesitamos 5 pasos de 5ms
+#define INTERRUPCIONES_POR_TICK 5
+// Para llegar a un segundo entero, necesitamos 40 ticks
+#define TICKS_POR_SEGUNDO 40
 
-static volatile uint8_t contador_overflows = 0;
-static volatile uint8_t tick_pendiente = 0; //Nuevo
-static uint8_t overflows_por_tick = OVERFLOWS_POR_SEGUNDO / 8; //Nuevo
-static uint8_t contador_tick = 0; //Nuevo
-static clockCallback callback = NULL;
-static void *contexto_guardado = NULL;
+static volatile uint8_t tick_pendiente = 0;
+static volatile uint8_t contador_interrupciones = 0;
+static volatile uint8_t contador_ticks_segundo = 0;
 
 void Reloj_IniciarClock(void)
 {
     TCNT2 = 0;
-    TCCR2A = 0x00;
-    TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20); // Prescaler 1024
-    TIMSK2 |= (1 << TOIE2);
+
+    // Configura Modo CTC (Clear Timer on Compare Match)
+    TCCR2A = (1 << WGM21);
+
+    // Carga el valor de comparación para 5ms
+    OCR2A = VALOR_COMPARE_MATCH;
+
+    // Prescaler 1024
+    TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);
+
+    // Habilita interrupción por comparación de canal A (OCIE2A)
+    TIMSK2 |= (1 << OCIE2A);
+
     sei();
 }
 
 void Reloj_PararClock(void)
 {
     TCCR2B = 0;
-    TIMSK2 &= ~(1 << TOIE2);
+    TIMSK2 &= ~(1 << OCIE2A);
 }
 
-void Reloj_SetFunc(clockCallback funcion, void *contexto)
-{
-    callback = funcion;
-    contexto_guardado = contexto;
-}
-
-void Reloj_SetTicksPorSegundo(uint8_t ticks) //Nuevo
-{
-    if (ticks == 0)
-        ticks = 1;
-    overflows_por_tick = OVERFLOWS_POR_SEGUNDO / ticks;
-    if (overflows_por_tick == 0)
-        overflows_por_tick = 1;
-}
-
-uint8_t Reloj_HayTick(void) //Nuevo
+uint8_t Reloj_HayTick(void)
 {
     return tick_pendiente;
 }
 
-void Reloj_LimpiarTick(void) //Nuevo
+void Reloj_LimpiarTick(void)
 {
     tick_pendiente = 0;
 }
 
-ISR(TIMER2_OVF_vect)
+// Interrupción por comparación del Timer2
+ISR(TIMER2_COMPA_vect)
 {
-    if (++contador_tick >= overflows_por_tick) //Nuevo
+    // Cada vez que entra acá, pasaron ~5ms. El CPU se despierta del sleep.
+    if (++contador_interrupciones >= INTERRUPCIONES_POR_TICK)
     {
-        contador_tick = 0;
-        tick_pendiente = 1;
-    }
+        contador_interrupciones = 0;
+        tick_pendiente = 1; // Avisa al main que pasaron los 25ms
 
-    if (++contador_overflows >= OVERFLOWS_POR_SEGUNDO)
-    {
-        contador_overflows = 0;
-        if (callback != NULL)
-            callback(contexto_guardado);
+        // Control opcional del segundo exacto por hardware si el Microondas lo requiere
+        if (++contador_ticks_segundo >= TICKS_POR_SEGUNDO)
+        {
+            contador_ticks_segundo = 0;
+            // Acá adentro podés ejecutar un flag de segundo si la MEF lo prefiere
+        }
     }
 }

@@ -1,6 +1,5 @@
 #include "MEF_Microondas.h"
 
-#include "../Teclas.h"
 #include "../Errores.h"
 
 enum Encendidos
@@ -58,7 +57,7 @@ static uint8_t MEF_MicroondasSumarTiempoTecla(struct MEF_Microondas *self, uint8
     if (self->posTimerPantalla > 3)
         return ERROR_SUPERAR_TIEMPO_MAXIMO;
 
-    uint8_t valorNumerico = tecla - TECLA_0;
+    uint8_t valorNumerico = tecla - '0';
 
     if (self->posTimerPantalla == 2 && valorNumerico > 5) // Máx 99:59
         return ERROR_TIEMPO_INVALIDO;
@@ -139,22 +138,22 @@ static uint8_t MEF_MicroondasIngreso(struct MEF_Microondas *self, uint8_t tecla)
 {
     switch (tecla)
     {
-    case TECLA_0:
-    case TECLA_1:
-    case TECLA_2:
-    case TECLA_3:
-    case TECLA_4:
-    case TECLA_5:
-    case TECLA_6:
-    case TECLA_7:
-    case TECLA_8:
-    case TECLA_9:
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
         return MEF_MicroondasSumarTiempoTecla(self, tecla);
-    case TECLA_A:
+    case 'A':
         return MEF_MicroondasIniciarCoccion(self);
-    case TECLA_B:
+    case 'B':
         return MEF_MicroondasReinicio(self);
-    case TECLA_C:
+    case 'C':
     {
         uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
         if (error == SIN_ERROR)
@@ -162,12 +161,11 @@ static uint8_t MEF_MicroondasIngreso(struct MEF_Microondas *self, uint8_t tecla)
         else
             return error;
     }
-    case TECLA_D:
+    case 'D':
         return MEF_MicroondasPuerta(self);
 
     default:
         return SIN_ERROR;
-        break;
     }
 }
 
@@ -182,13 +180,13 @@ static uint8_t MEF_MicroondasCocinado(struct MEF_Microondas *self, uint8_t tecla
 
     switch (tecla)
     {
-    case TECLA_A:
+    case 'A':
         return SIN_ERROR;
-    case TECLA_B:
+    case 'B':
         return MEF_MicroondasPausar(self);
-    case TECLA_C:
+    case 'C':
         return MEF_MicroondasSumarTiempo(self, 30);
-    case TECLA_D:
+    case 'D':
         return MEF_MicroondasPuerta(self);
     default:
         return SIN_ERROR;
@@ -200,11 +198,11 @@ static uint8_t MEF_MicroondasPausado(struct MEF_Microondas *self, uint8_t tecla)
 {
     switch (tecla)
     {
-    case TECLA_A:
+    case 'A':
         return MEF_MicroondasIniciarCoccion(self);
-    case TECLA_B:
+    case 'B':
         return MEF_MicroondasReinicio(self);
-    case TECLA_C:
+    case 'C':
     {
         uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
         if (error == SIN_ERROR)
@@ -212,12 +210,11 @@ static uint8_t MEF_MicroondasPausado(struct MEF_Microondas *self, uint8_t tecla)
         else
             return error;
     }
-    case TECLA_D:
+    case 'D':
         return MEF_MicroondasPuerta(self);
 
     default:
         return SIN_ERROR;
-        break;
     }
 }
 
@@ -231,11 +228,11 @@ static uint8_t MEF_MicroondasFin(struct MEF_Microondas *self, uint8_t tecla)
 
     switch (tecla)
     {
-    case TECLA_A:
+    case 'A':
         return SIN_ERROR;
-    case TECLA_B:
+    case 'B':
         return MEF_MicroondasReinicio(self);
-    case TECLA_C:
+    case 'C':
     {
         uint8_t error = MEF_MicroondasSumarTiempo(self, 30);
         if (error == SIN_ERROR)
@@ -243,12 +240,11 @@ static uint8_t MEF_MicroondasFin(struct MEF_Microondas *self, uint8_t tecla)
         else
             return error;
     }
-    case TECLA_D:
+    case 'D':
         return MEF_MicroondasPuerta(self);
 
     default:
         return SIN_ERROR;
-        break;
     }
 }
 
