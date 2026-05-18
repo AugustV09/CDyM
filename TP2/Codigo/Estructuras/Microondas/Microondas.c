@@ -5,6 +5,27 @@
 #include "../MEF_Microondas/MEF_Microondas.h"
 #include <stdio.h>
 
+#define POSICION_MEDIO_TIMER 5
+
+const char *EstadosMicroondasToString(uint8_t estado)
+{
+    switch (estado)
+    {
+
+        // Deben tener todos los string la misma cantidad de caracteres
+    case MEF_MICROONDAS_INGRESO:
+        return "Ingrese tiempo";
+    case MEF_MICROONDAS_COCINANDO:
+        return "Cocinando...";
+    case MEF_MICROONDAS_PAUSADO:
+        return "Pausado";
+    case MEF_MICROONDAS_FIN_COCCION:
+        return "Finalizado";
+    default:
+        return "ESTADO_DESCONOCIDO";
+    }
+}
+
 static void formatearTiempo(uint16_t tiempo, uint8_t *out_str)
 {
     uint8_t horas = tiempo / 100;
@@ -35,7 +56,9 @@ void Microondas_Actualizar(void)
     formatearTiempo(MEF_GetTiempoPantalla(), mostrarDisplay);
 
     LCDcursorOFF();
-    LCDclearAndWriteString((char *)mostrarDisplay);
+    LCDclr();
+    LCDclearAndWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
+    LCDclearAndWriteString((const uint8_t *)EstadosMicroondasToString(MEF_GetEstadoMicroondas()), 0, 1);
 
     uint8_t posCursor = MEF_GetPosTimerPantalla();
     uint8_t mostrarCursor = (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_INGRESO) && posCursor <= 3;
@@ -56,6 +79,6 @@ void Microondas_Actualizar(void)
         posCursor++;
     }
 
-    LCDGotoXY(posCursor, 0);
+    LCDGotoXY(posCursor + POSICION_MEDIO_TIMER, 0);
     LCDcursorOn();
 }

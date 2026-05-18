@@ -427,7 +427,7 @@ void LCD_Update(){
 */
 
 // Outputs string to LCD
-void LCDstringZero(uint8_t *data)
+void LCDstringZero(const uint8_t *data)
 {
 	register uint8_t i;
 
@@ -441,10 +441,8 @@ void LCDstringZero(uint8_t *data)
 	}
 }
 
-void LCDclearAndWriteString(uint8_t *data)
+void LCDclearAndWriteString(const uint8_t *data, uint8_t columna, uint8_t fila)
 {
-	// LCDclr();
-	// LCDhome();
-	LCDGotoXY(0, 0);
+	LCDGotoXY(columna, fila);
 	LCDstringZero(data);
 }
