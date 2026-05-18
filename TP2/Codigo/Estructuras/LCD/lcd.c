@@ -441,7 +441,7 @@ void LCDstringZero(const uint8_t *data)
 	}
 }
 
-void LCDclearAndWriteString(const uint8_t *data, uint8_t columna, uint8_t fila)
+void LCDWriteString(const uint8_t *data, uint8_t columna, uint8_t fila)
 {
 	LCDGotoXY(columna, fila);
 	LCDstringZero(data);

@@ -32,18 +32,15 @@ struct EstructuraInternaMEF
 {
     enum EstadosMicroondas estadoMicroondas;
     enum EstadosPuerta estadoPuerta;
-    uint8_t posTimerPantalla;
     uint16_t tiempoPantalla;
     struct TemporizadorTicks temporizador;
     struct TemporizadorTicks temporizadorFin;
 };
 
 static struct EstructuraInternaMEF instancia_mef;
-static const uint16_t POTENCIAS_10[] = {1000, 100, 10, 1};
 
 enum EstadosMicroondas MEF_GetEstadoMicroondas(void) { return instancia_mef.estadoMicroondas; }
 uint16_t MEF_GetTiempoPantalla(void) { return instancia_mef.tiempoPantalla; }
-uint8_t MEF_GetPosTimerPantalla(void) { return instancia_mef.posTimerPantalla; }
 
 static void TiempoSegundosDesdeTiempoPantalla(uint16_t *tiempoSegundos, uint16_t tiempoPantalla)
 {
@@ -56,6 +53,15 @@ static void TiempoPantallaDesdeTiempoSegundos(uint16_t *tiempoPantalla, uint16_t
 {
     uint32_t minutos = tiempoSegundos / 60;
     uint32_t segundos = tiempoSegundos % 60;
+
+    // Si por la locura del ingreso el tiempo supera los 99 minutos reales (5940 segundos),
+    // lo topamos en 99 minutos para que no desborde los 4 dígitos del display (99:59).
+    if (minutos > 99)
+    {
+        minutos = 99;
+        segundos += 60;
+    }
+
     *tiempoPantalla = (uint16_t)(minutos * 100u + segundos);
 }
 
@@ -83,16 +89,15 @@ static uint8_t MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
     if (instancia_mef.estadoMicroondas != MEF_MICROONDAS_INGRESO)
         return ERROR_SUMAR_TIEMPO_CUANDO_ESTA_ANDANDO;
 
-    if (instancia_mef.posTimerPantalla > 3)
+    // Si ya tiene 4 dígitos (ej: 9999), cualquier otra tecla lo pasaría a 5 dígitos.
+    // El máximo valor representable en el display será 9999.
+    if (instancia_mef.tiempoPantalla >= 1000)
         return ERROR_SUPERAR_TIEMPO_MAXIMO;
 
     uint8_t valorNumerico = tecla - '0';
 
-    if (instancia_mef.posTimerPantalla == 2 && valorNumerico > 5)
-        return ERROR_TIEMPO_INVALIDO;
-
-    instancia_mef.tiempoPantalla += (uint16_t)valorNumerico * POTENCIAS_10[instancia_mef.posTimerPantalla];
-    instancia_mef.posTimerPantalla++;
+    // Desplazamiento clásico hacia la izquierda
+    instancia_mef.tiempoPantalla = (instancia_mef.tiempoPantalla * 10) + valorNumerico;
 
     return SIN_ERROR;
 }
@@ -100,7 +105,6 @@ static uint8_t MEF_MicroondasSumarTiempoTecla(uint8_t tecla)
 static uint8_t MEF_MicroondasReinicio(void)
 {
     instancia_mef.estadoMicroondas = MEF_MICROONDAS_INGRESO;
-    instancia_mef.posTimerPantalla = 0;
     instancia_mef.tiempoPantalla = 0;
 
     instancia_mef.temporizador.tiempoSegundos = 0;
@@ -340,4 +344,17 @@ void MEF_ActualizarSalidas(void)
     }
 
     Encender(encendidos);
+}
+
+uint8_t MEF_ObtenerSegundosRestantes(void)
+{
+    switch (instancia_mef.estadoMicroondas)
+    {
+    case MEF_MICROONDAS_COCINANDO:
+        return instancia_mef.temporizador.tiempoSegundos;
+    case MEF_MICROONDAS_FIN_COCCION:
+        return instancia_mef.temporizadorFin.tiempoSegundos;
+    default:
+        return 0;
+    }
 }

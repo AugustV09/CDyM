@@ -31,6 +31,7 @@
 int main(void)
 {
     LCD_Init();
+    LCDcursorOFF();
     Reloj_IniciarClock();
     Microondas_Init();
 

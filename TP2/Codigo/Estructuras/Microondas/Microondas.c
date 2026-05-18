@@ -37,48 +37,45 @@ void Microondas_Init(void)
 {
     // Ya no arrastra parámetros desde el main
     MEF_Microondas_Init();
+    LCDWriteString((const uint8_t *)EstadosMicroondasToString(MEF_GetEstadoMicroondas()), 0, 1);
 }
 
 void Microondas_Actualizar(void)
 {
     uint8_t tecla;
-    uint8_t error;
 
     if (!KEYPAD_Scan(&tecla))
     {
         tecla = 0;
     }
 
-    error = MEF_ActualizarEstado(tecla);
+    uint8_t estadoAnterior = MEF_GetEstadoMicroondas();
+
+    MEF_ActualizarEstado(tecla);
     MEF_ActualizarSalidas();
 
     uint8_t mostrarDisplay[6];
     formatearTiempo(MEF_GetTiempoPantalla(), mostrarDisplay);
 
-    LCDcursorOFF();
-    LCDclr();
-    LCDclearAndWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
-    LCDclearAndWriteString((const uint8_t *)EstadosMicroondasToString(MEF_GetEstadoMicroondas()), 0, 1);
+    if (estadoAnterior != MEF_GetEstadoMicroondas())
+    {
+        LCDclr();
+        LCDvisible();
+        LCDWriteString((const uint8_t *)EstadosMicroondasToString(MEF_GetEstadoMicroondas()), 0, 1);
+    }
 
-    uint8_t posCursor = MEF_GetPosTimerPantalla();
-    uint8_t mostrarCursor = (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_INGRESO) && posCursor <= 3;
+    LCDWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
 
     if (MEF_GetEstadoMicroondas() == MEF_MICROONDAS_FIN_COCCION)
     {
-        LCDblank();
-        return;
+        uint8_t segundosRestantes = MEF_ObtenerSegundosRestantes();
+        if (segundosRestantes % 2)
+        {
+            LCDvisible();
+        }
+        else
+        {
+            LCDblank();
+        }
     }
-
-    if (!mostrarCursor)
-    {
-        return;
-    }
-
-    if (posCursor >= 2)
-    {
-        posCursor++;
-    }
-
-    LCDGotoXY(posCursor + POSICION_MEDIO_TIMER, 0);
-    LCDcursorOn();
 }

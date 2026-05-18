@@ -22,11 +22,11 @@ enum EstadosPuerta
 // Getters públicos para el LCD
 enum EstadosMicroondas MEF_GetEstadoMicroondas(void);
 uint16_t MEF_GetTiempoPantalla(void);
-uint8_t MEF_GetPosTimerPantalla(void);
 
 // Interfaz pública (Ya no requiere parámetros)
 void MEF_Microondas_Init(void);
 uint8_t MEF_ActualizarEstado(uint8_t tecla);
 void MEF_ActualizarSalidas(void);
+uint8_t MEF_ObtenerSegundosRestantes();
 
 #endif
