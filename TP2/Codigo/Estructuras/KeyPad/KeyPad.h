@@ -7,6 +7,9 @@
 #define CANT_FILAS 4
 #define CANT_COLUMNAS 4
 
+#define KEYPAD_KEY_COUNT (CANT_FILAS * CANT_COLUMNAS)
+#define KEYPAD_NO_KEY    0xFF
+
 #define FILA_0_PORT PORTB
 #define FILA_1_PORT PORTB
 #define FILA_2_PORT PORTB
@@ -63,6 +66,6 @@
 
 */
 
-uint8_t KEYPAD_Scan(uint8_t *); 
+uint8_t KEYPAD_Scan(uint8_t *); //Devuelve lo pulsado en el teclado como un char en lo apuntado por el puntero siempre y cuando la función retorne 1.
 
 #endif
