@@ -308,7 +308,6 @@ static void EstadoFinCoccion(uint8_t tecla)
         if (self.tiempoFinSegundos == 0)
         {
             ResetVariablesTiempo();
-            return;
         }
     }
 
