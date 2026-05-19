@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #define POSICION_MEDIO_TIMER 5
-#define MAX_TIME (99 * 60 + 99)
+#define MAX_TIME_SEGUNDOS (99u * 60u + 59u) // 5999 s  →  99:59
 
 /* --- Enumeraciones Internas --- */
 enum EstadosMicroondas
@@ -30,20 +30,19 @@ enum Encendidos
     ENCENDIDO_LUZ_TERMINADO = (1 << 2),
 };
 
-/* --- Estructuras de Datos Internas --- */
+/* --- Estructura de Datos Interna --- */
 struct EstructuraMicroondas
 {
     enum EstadosMicroondas estado;
     enum EstadosPuerta puerta;
-    uint16_t tiempoPantalla;    // Formato MMSS para el display
-    uint16_t tiempoSegundos;    // Tiempo de cocción restante en segundos
-    uint16_t tiempoFinSegundos; // Tiempo de espera final de 5 segundos
+    uint16_t tiempoPantalla;   // BCD decimal MMSS: 0130 == 01:30
+    uint16_t tiempoSegundos;   // Segundos reales restantes de coccion
+    uint8_t tiempoFinSegundos; // Cuenta regresiva 5 s al finalizar
 };
 
-/* Instancia privada del sistema */
 static struct EstructuraMicroondas self;
 
-/* --- Funciones Auxiliares de Conversión y Formateo --- */
+/* --- Conversion y Formateo --- */
 
 static const char *EstadosToString(enum EstadosMicroondas estado)
 {
@@ -64,32 +63,51 @@ static const char *EstadosToString(enum EstadosMicroondas estado)
 
 static void formatearTiempoDisplay(uint16_t tiempo, uint8_t *out_str)
 {
-    uint8_t horas = tiempo / 100;
-    uint8_t minutos = tiempo % 100;
-    sprintf((char *)out_str, "%02d:%02d", horas, minutos);
+    uint8_t minutos = (uint8_t)(tiempo / 100u);
+    uint8_t segundos = (uint8_t)(tiempo % 100u);
+    sprintf((char *)out_str, "%02d:%02d", minutos, segundos);
 }
 
-static void TiempoSegundosDesdePantalla(uint16_t *tiempoSegundos, uint16_t tiempoPantalla)
+/*
+ * Pantalla -> segundos reales (MM:SS estandar).
+ * Si el usuario ingreso SS >= 60, se saturan a 59.
+ */
+static void TiempoSegundosDesdePantalla(uint16_t *tiempoSegundos,
+                                        uint16_t tiempoPantalla)
 {
-    uint16_t minutos = tiempoPantalla / 100;
-    uint16_t segundos = tiempoPantalla % 100;
+    uint16_t minutos = tiempoPantalla / 100u;
+    uint16_t segundos = tiempoPantalla % 100u;
+
+    if (segundos > 59u)
+        segundos = 59u;
+    if (minutos > 99u)
+        minutos = 99u;
+
     *tiempoSegundos = (uint16_t)(minutos * 60u + segundos);
+    if (*tiempoSegundos > MAX_TIME_SEGUNDOS)
+        *tiempoSegundos = MAX_TIME_SEGUNDOS;
 }
 
-static void TiempoPantallaDesdeSegundos(uint16_t *tiempoPantalla, uint16_t tiempoSegundos)
+/*
+ * Segundos reales -> pantalla MM:SS estandar.
+ * Segundos siempre en [0, 59].
+ */
+static void TiempoPantallaDesdeSegundos(uint16_t *tiempoPantalla,
+                                        uint16_t tiempoSegundos)
 {
-    uint32_t minutos = tiempoSegundos / 60;
-    uint32_t segundos = tiempoSegundos % 60;
+    uint16_t minutos = tiempoSegundos / 60u;
+    uint16_t segundos = tiempoSegundos % 60u;
 
-    if (minutos > 99)
+    if (minutos > 99u)
     {
-        minutos = 99;
-        segundos += 60;
+        minutos = 99u;
+        segundos = 59u;
     }
+
     *tiempoPantalla = (uint16_t)(minutos * 100u + segundos);
 }
 
-/* --- Gestión de Salidas de Hardware --- */
+/* --- Salidas de Hardware --- */
 
 static void AplicarSalidas(int8_t encendidos)
 {
@@ -112,22 +130,17 @@ static void AplicarSalidas(int8_t encendidos)
 static void ActualizarSalidasHardware(void)
 {
     int8_t encendidos = 0;
-
     switch (self.estado)
     {
     case MICROONDAS_COCINANDO:
         encendidos = ENCENDIDO_LUZ | ENCENDIDO_MAGNETRON;
         break;
-
     case MICROONDAS_PAUSADO:
         encendidos = ENCENDIDO_LUZ;
         break;
-
     case MICROONDAS_FIN_COCCION:
-        // Parpadea usando el tiempo del fin de cocción controlado por el Reloj
         encendidos = (self.tiempoFinSegundos % 2) ? ENCENDIDO_LUZ_TERMINADO : 0;
         break;
-
     default:
         encendidos = 0;
         break;
@@ -135,12 +148,11 @@ static void ActualizarSalidasHardware(void)
     AplicarSalidas(encendidos);
 }
 
-/* --- Lógica Interna de la MEF --- */
+/* --- Logica Interna --- */
 
 static void ResetVariablesTiempo(void)
 {
-    Reloj_StopCountingSeconds(); // El reloj deja de acumular segundos
-
+    Reloj_StopCountingSeconds();
     self.estado = MICROONDAS_INGRESO;
     self.tiempoPantalla = 0;
     self.tiempoSegundos = 0;
@@ -152,42 +164,33 @@ static void IniciarCoccion(void)
     if (self.tiempoPantalla == 0 || self.puerta == MICROONDAS_PUERTA_ABIERTA)
         return;
 
-    // Si venimos de INGRESO recalculamos. Si venimos de PAUSA retiene el valor remanente.
     if (self.estado == MICROONDAS_INGRESO)
-    {
         TiempoSegundosDesdePantalla(&self.tiempoSegundos, self.tiempoPantalla);
-    }
 
-    // Sincronizamos fase del reloj para el primer segundo exacto y arrancamos cuenta
     Reloj_RestartSeconds();
     Reloj_StartCountingSeconds();
-
     self.estado = MICROONDAS_COCINANDO;
 }
 
 static void SumarTiempoRapido(uint16_t segundos)
 {
-    // Suma directo en segundos sobre la base actual
     if (self.estado == MICROONDAS_INGRESO)
-    {
         TiempoSegundosDesdePantalla(&self.tiempoSegundos, self.tiempoPantalla);
-    }
 
     self.tiempoSegundos += segundos;
-
-    if (self.tiempoSegundos > MAX_TIME)
-        self.tiempoSegundos = MAX_TIME;
+    if (self.tiempoSegundos > MAX_TIME_SEGUNDOS)
+        self.tiempoSegundos = MAX_TIME_SEGUNDOS;
 
     TiempoPantallaDesdeSegundos(&self.tiempoPantalla, self.tiempoSegundos);
 }
 
 static void RegistrarTeclaIngreso(uint8_t tecla)
 {
-    if (self.estado != MICROONDAS_INGRESO || self.tiempoPantalla >= 1000)
+    if (self.estado != MICROONDAS_INGRESO || self.tiempoPantalla >= 1000u)
         return;
 
     uint8_t valorNumerico = tecla - '0';
-    self.tiempoPantalla = (self.tiempoPantalla * 10) + valorNumerico;
+    self.tiempoPantalla = (uint16_t)(self.tiempoPantalla * 10u + valorNumerico);
 }
 
 static void ControlarPuerta(void)
@@ -202,10 +205,7 @@ static void ControlarPuerta(void)
         else if (self.estado == MICROONDAS_FIN_COCCION)
         {
             ResetVariablesTiempo();
-            self.tiempoFinSegundos = 0;
-            self.estado = MICROONDAS_INGRESO;
         }
-
         self.puerta = MICROONDAS_PUERTA_ABIERTA;
     }
     else
@@ -214,14 +214,12 @@ static void ControlarPuerta(void)
     }
 }
 
-/* --- Controladores de cada Estado --- */
+/* --- Manejadores por Estado --- */
 
 static void EstadoIngreso(uint8_t tecla)
 {
     if (tecla >= '0' && tecla <= '9')
-    {
         RegistrarTeclaIngreso(tecla);
-    }
     else
     {
         switch (tecla)
@@ -245,7 +243,6 @@ static void EstadoIngreso(uint8_t tecla)
 
 static void EstadoCocinando(uint8_t tecla)
 {
-    // El Reloj maneja los segundos por hardware, acá solo verificamos el flag
     if (Reloj_HaySegundo())
     {
         Reloj_LimpiarSegundo();
@@ -260,8 +257,6 @@ static void EstadoCocinando(uint8_t tecla)
         {
             self.estado = MICROONDAS_FIN_COCCION;
             self.tiempoFinSegundos = 5;
-
-            // Re-sincronizamos el reloj para contar los 5 segundos de aviso final
             Reloj_RestartSeconds();
             Reloj_StartCountingSeconds();
             return;
@@ -276,8 +271,6 @@ static void EstadoCocinando(uint8_t tecla)
         break;
     case 'C':
         SumarTiempoRapido(30);
-        // Al sumar tiempo, re-sincronizamos la fase por si acaso
-        Reloj_RestartSeconds();
         break;
     case 'D':
         ControlarPuerta();
@@ -311,9 +304,7 @@ static void EstadoFinCoccion(uint8_t tecla)
     {
         Reloj_LimpiarSegundo();
         if (self.tiempoFinSegundos > 0)
-        {
             self.tiempoFinSegundos--;
-        }
 
         if (self.tiempoFinSegundos == 0)
         {
@@ -322,7 +313,6 @@ static void EstadoFinCoccion(uint8_t tecla)
         }
     }
 
-    // Según consigna: Bloqueado a que solo B (Clear) o abrir puerta cancelen los 5s de espera
     switch (tecla)
     {
     case 'B':
@@ -358,7 +348,7 @@ static void ActualizarEstadoMEF(uint8_t tecla)
 }
 
 /* ========================================================================== */
-/* IMPLEMENTACIÓN DE LA INTERFAZ                                              */
+/* INTERFAZ PUBLICA                                                           */
 /* ========================================================================== */
 
 void Microondas_Init(void)
@@ -368,7 +358,6 @@ void Microondas_Init(void)
     MEF_MICROONDAS_DD_LUZ_TERMINADO |= (1 << MEF_MICROONDAS_PIN_LUZ_TERMINADO);
 
     Reloj_Init();
-
     ResetVariablesTiempo();
     self.puerta = MICROONDAS_PUERTA_CERRADA;
 
@@ -380,11 +369,8 @@ void Microondas_Init(void)
 void Microondas_Actualizar(void)
 {
     uint8_t tecla;
-
     if (!KEYPAD_Scan(&tecla))
-    {
         tecla = 0;
-    }
 
     enum EstadosMicroondas estadoAnterior = self.estado;
     enum EstadosPuerta puertaAnterior = self.puerta;
@@ -395,7 +381,6 @@ void Microondas_Actualizar(void)
     uint8_t mostrarDisplay[6];
     formatearTiempoDisplay(self.tiempoPantalla, mostrarDisplay);
 
-    /* Si cambió el estado, refrescar completamente el texto descriptivo */
     if (estadoAnterior != self.estado || puertaAnterior != self.puerta)
     {
         LCDclr();
@@ -406,19 +391,13 @@ void Microondas_Actualizar(void)
             LCDWriteString((const uint8_t *)EstadosToString(self.estado), 0, 1);
     }
 
-    /* Dibujar el Timer */
     LCDWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
 
-    /* Lógica de parpadeo del Display en FIN DE COCCIÓN */
     if (self.estado == MICROONDAS_FIN_COCCION)
     {
         if (self.tiempoFinSegundos % 2)
-        {
             LCDvisible();
-        }
         else
-        {
             LCDblank();
-        }
     }
 }
