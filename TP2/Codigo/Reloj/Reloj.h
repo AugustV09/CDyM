@@ -3,19 +3,58 @@
 
 #include <stdint.h>
 
-// Inicialización básica del hardware (Timer2 a 5ms)
+/*
+ * A partir de aca empieza la personalizacion del usuario
+ * Puede cambiar:
+ * Cada cuantas interrupciones de 5ms es un Tick
+ */
+
+#define INTERRUPCIONES_POR_TICK 5 // Este caso un tick equivale a 25ms
+
+/*
+ * Aca termina la personalizacion del usuario
+ */
+
+/**
+ * @brief Inicializa el reloj, interrupciones cada 5ms con TIMER2
+ * @return void
+ */
 void Reloj_Init(void);
 
-// Control de la cuenta de segundos
+/**
+ * @brief Comienza la cuenta de segundos
+ * @return void
+ */
 void Reloj_StartCountingSeconds(void);
+
+/**
+ * @brief Detiene la cuenta de segundos
+ * @return void
+ */
 void Reloj_StopCountingSeconds(void);
+
+/**
+ * @brief Reinicia la cuenta de segundos
+ * @return void
+ */
 void Reloj_RestartSeconds(void);
 
-// Gestión de Ticks (25ms) para el loop principal / MEF
+/**
+ * @brief Indica si hay un tick disponible
+ * @return uint8_t
+ */
 uint8_t Reloj_HayTick(void);
+
+/**
+ * @brief Limpia el tick
+ * @return void
+ */
 void Reloj_LimpiarTick(void);
 
-// Gestión de Segundos
+/**
+ * @brief Indica si hay un segundo disponible
+ * @return uint8_t
+ */
 uint8_t Reloj_HaySegundo(void);
 void Reloj_LimpiarSegundo(void);
 

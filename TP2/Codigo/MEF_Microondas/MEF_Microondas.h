@@ -28,9 +28,6 @@
  * Aca termina la personalizacion del usuario
  */
 
-/* Configuración de temporización (Depende de la frecuencia de llamada) */
-#define TICKS_POR_SEGUNDOS 40
-
 /**
  * @brief Inicializa el microondas
  */

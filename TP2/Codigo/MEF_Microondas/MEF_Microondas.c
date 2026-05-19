@@ -119,6 +119,10 @@ static void ActualizarSalidasHardware(void)
         encendidos = ENCENDIDO_LUZ | ENCENDIDO_MAGNETRON;
         break;
 
+    case MICROONDAS_PAUSADO:
+        encendidos = ENCENDIDO_LUZ;
+        break;
+
     case MICROONDAS_FIN_COCCION:
         // Parpadea usando el tiempo del fin de cocción controlado por el Reloj
         encendidos = (self.tiempoFinSegundos % 2) ? ENCENDIDO_LUZ_TERMINADO : 0;
@@ -376,6 +380,7 @@ void Microondas_Actualizar(void)
     }
 
     enum EstadosMicroondas estadoAnterior = self.estado;
+    enum EstadosPuerta puertaAnterior = self.puerta;
 
     ActualizarEstadoMEF(tecla);
     ActualizarSalidasHardware();
@@ -384,11 +389,14 @@ void Microondas_Actualizar(void)
     formatearTiempoDisplay(self.tiempoPantalla, mostrarDisplay);
 
     /* Si cambió el estado, refrescar completamente el texto descriptivo */
-    if (estadoAnterior != self.estado)
+    if (estadoAnterior != self.estado || puertaAnterior != self.puerta)
     {
         LCDclr();
         LCDvisible();
-        LCDWriteString((const uint8_t *)EstadosToString(self.estado), 0, 1);
+        if (self.puerta == MICROONDAS_PUERTA_ABIERTA)
+            LCDWriteString((const uint8_t *)"PUERTA ABIERTA", 0, 1);
+        else
+            LCDWriteString((const uint8_t *)EstadosToString(self.estado), 0, 1);
     }
 
     /* Dibujar el Timer */
