@@ -259,7 +259,6 @@ static void EstadoCocinando(uint8_t tecla)
             self.tiempoFinSegundos = 5;
             Reloj_RestartSeconds();
             Reloj_StartCountingSeconds();
-            return;
         }
     }
 
