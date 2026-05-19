@@ -10,3 +10,7 @@ TODO LO QUE ESTA ACA DEBE SER LEIDO Y VERIFICADO ANTES DE LA ENTREGA
     que pasarle fila, columna(seria para el offset de la escritura) y el string
 
 CONTINUAR!
+
+Comando para subir al arduino:
+
+sudo avrdude -v -p m328p -c arduino -P /dev/ttyUSB0 -b 115200 -D -U flash:w:"/home/fausto/CDyM/TP2/Codigo/main.hex":i
