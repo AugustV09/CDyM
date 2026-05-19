@@ -17,7 +17,7 @@ enum EstadosMicroondas
     MICROONDAS_FIN_COCCION,
 };
 
-enum EstadosPuerta
+enum EntradaPuerta
 {
     MICROONDAS_PUERTA_CERRADA,
     MICROONDAS_PUERTA_ABIERTA,
@@ -34,7 +34,7 @@ enum Encendidos
 struct EstructuraMicroondas
 {
     enum EstadosMicroondas estado;
-    enum EstadosPuerta puerta;
+    enum EntradaPuerta puerta;
     uint16_t tiempoPantalla;   // BCD decimal MMSS: 0130 == 01:30
     uint16_t tiempoSegundos;   // Segundos reales restantes de coccion
     uint8_t tiempoFinSegundos; // Cuenta regresiva 5 s al finalizar
@@ -372,7 +372,7 @@ void Microondas_Actualizar(void)
         tecla = 0;
 
     enum EstadosMicroondas estadoAnterior = self.estado;
-    enum EstadosPuerta puertaAnterior = self.puerta;
+    enum EntradaPuerta puertaAnterior = self.puerta;
     uint16_t tiempoAnterior = self.tiempoPantalla;
 
     ActualizarEstadoMEF(tecla);
