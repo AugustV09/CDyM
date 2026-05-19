@@ -5,7 +5,7 @@
 // 5 ms base con Prescaler 1024 a 16MHz => OCR2A = 77
 #define VALOR_COMPARE_MATCH 77
 
-#define TICKS_POR_SEGUNDO 1000 / (5 * INTERRUPCIONES_POR_TICK)
+#define TICKS_POR_SEGUNDO (1000 / (5 * INTERRUPCIONES_POR_TICK))
 
 // Variables volátiles para sincronización con la ISR
 static volatile uint8_t tick_pendiente = 0;
