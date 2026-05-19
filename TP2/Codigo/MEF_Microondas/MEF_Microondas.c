@@ -199,6 +199,13 @@ static void ControlarPuerta(void)
             Reloj_StopCountingSeconds();
             self.estado = MICROONDAS_PAUSADO;
         }
+        else if (self.estado == MICROONDAS_FIN_COCCION)
+        {
+            ResetVariablesTiempo();
+            self.tiempoFinSegundos = 0;
+            self.estado = MICROONDAS_INGRESO;
+        }
+
         self.puerta = MICROONDAS_PUERTA_ABIERTA;
     }
     else
