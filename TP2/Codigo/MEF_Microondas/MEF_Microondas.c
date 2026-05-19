@@ -363,6 +363,7 @@ void Microondas_Init(void)
 
     LCD_Init();
     LCDcursorOFF();
+    LCDWriteString((const uint8_t *)"00:00", POSICION_MEDIO_TIMER, 0);
     LCDWriteString((const uint8_t *)EstadosToString(self.estado), 0, 1);
 }
 
@@ -374,6 +375,7 @@ void Microondas_Actualizar(void)
 
     enum EstadosMicroondas estadoAnterior = self.estado;
     enum EstadosPuerta puertaAnterior = self.puerta;
+    uint16_t tiempoAnterior = self.tiempoPantalla;
 
     ActualizarEstadoMEF(tecla);
     ActualizarSalidasHardware();
@@ -389,9 +391,11 @@ void Microondas_Actualizar(void)
             LCDWriteString((const uint8_t *)"PUERTA ABIERTA", 0, 1);
         else
             LCDWriteString((const uint8_t *)EstadosToString(self.estado), 0, 1);
-    }
 
-    LCDWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
+        LCDWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
+    }
+    else if (tiempoAnterior != self.tiempoPantalla)
+        LCDWriteString(mostrarDisplay, POSICION_MEDIO_TIMER, 0);
 
     if (self.estado == MICROONDAS_FIN_COCCION)
     {
