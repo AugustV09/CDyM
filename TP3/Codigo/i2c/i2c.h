@@ -1,8 +1,7 @@
 /**
  * @file i2c.h
  * @brief Biblioteca para el manejo del periférico TWI (I2C) en AVR.
- * @note Diseñado para el microcontrolador ATmega328P a 16MHz[cite: 6].
- * Curso: Circuitos Digitales y Microcontroladores - UNLP[cite: 1, 2, 4].
+ * @note Diseñado para el microcontrolador ATmega328P a 16MHz
  */
 
 #ifndef I2C_H
