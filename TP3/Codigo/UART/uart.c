@@ -3,153 +3,131 @@
  */
 
 #include "uart.h"
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
+
+/** Tamaños de los buffers circulares (DEBEN ser potencias de 2 para poder usar
+ * (& (SIZE - 1)) en lugar del operador módulo %) */
+#define UART_RX_BUF_SIZE 64
+#define UART_TX_BUF_SIZE 64
+
+// Valor que debe tener UBRR para que el BAUD RATE sea de ~9600 bps (a 16MHz)
+#define BAUD 103
 
 /* --- Buffer de recepción (productor: ISR RX, consumidor: main) --- */
 static volatile uint8_t rx_buf[UART_RX_BUF_SIZE];
 static volatile uint8_t rx_head;
 static volatile uint8_t rx_tail;
+static volatile uint8_t rx_msg_flag;
 
-/* --- Estado de transmisión (productor: main, consumidor: ISR UDRE) --- */
-static volatile const char *tx_ptr;
-static volatile uint8_t tx_busy;
+/* --- Buffer de transmisión (productor: main, consumidor: ISR UDRE) --- */
+static volatile uint8_t tx_buf[UART_TX_BUF_SIZE];
+static volatile uint8_t tx_head;
+static volatile uint8_t tx_tail;
 
-static uint8_t rx_push(uint8_t data)
-{
-    uint8_t next_head = (uint8_t)((rx_head + 1) % UART_RX_BUF_SIZE);
+void uart_init(void) {
+  rx_head = 0;
+  rx_tail = 0;
+  rx_msg_flag = 0;
 
-    if (next_head == rx_tail)
-        return 0;
+  tx_head = 0;
+  tx_tail = 0;
 
-    rx_buf[rx_head] = data;
-    rx_head = next_head;
-    return 1;
-}
-
-static uint8_t rx_pop(uint8_t *data)
-{
-    if (rx_head == rx_tail)
-        return 0;
-
-    *data = rx_buf[rx_tail];
-    rx_tail = (uint8_t)((rx_tail + 1) % UART_RX_BUF_SIZE);
-    return 1;
-}
-
-void uart_init(void)
-{
-    rx_head = 0;
-    rx_tail = 0;
-    tx_ptr = 0;
-    tx_busy = 0;
-
-    UBRR0L = BAUD;
+  UBRR0L = BAUD;
 #if USE_2X
-    UCSR0A |= (1 << U2X0);
+  UCSR0A |= (1 << U2X0);
 #else
-    UCSR0A &= ~(1 << U2X0);
+  UCSR0A &= ~(1 << U2X0);
 #endif
 
-    /* 8 bits de datos, sin paridad, 1 bit de stop, modo asíncrono */
-    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+  /* 8 bits de datos, sin paridad, 1 bit de stop, modo asíncrono */
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
-    /* TX/RX habilitados; solo interrupción de recepción al inicio */
-    UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
+  /* TX/RX habilitados; solo interrupción de recepción al inicio */
+  UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
 }
 
-uint8_t uart_transfer(const char *str)
-{
-    uint8_t sreg;
+void uart_tx_interrupt_enable(void) { UCSR0B |= (1 << UDRIE0); }
 
-    if (str == 0)
-        return 0;
+void uart_tx_interrupt_disable(void) { UCSR0B &= ~(1 << UDRIE0); }
 
-    sreg = SREG;
-    cli();
+uint8_t uart_send_char(uint8_t c) {
+  uint8_t next_head = (tx_head + 1) & (UART_TX_BUF_SIZE - 1);
 
-    if (tx_busy)
-    {
-        SREG = sreg;
-        return 0;
-    }
+  if (next_head == tx_tail) {
+    return 0; // Buffer lleno
+  }
 
-    tx_busy = 1;
-    tx_ptr = str;
-
-    /* Primer byte: carga directa en UDR (doble buffer del hardware) */
-    UDR0 = (uint8_t)str[0];
-    tx_ptr++;
-
-    /*
-     * UDRE=1 mientras UDR está vacío. Si UDRIE quedara siempre habilitada,
-     * la ISR se ejecutaría en bucle sin transmitir nada útil.
-     * Solo se habilita UDRIE cuando quedan bytes por enviar; la ISR la
-     * deshabilita al agotar la cadena.
-     */
-    if (*tx_ptr != '\0')
-        UCSR0B |= (1 << UDRIE0);
-    else
-    {
-        tx_busy = 0;
-        tx_ptr = 0;
-    }
-
-    SREG = sreg;
-    return 1;
+  tx_buf[tx_head] = c;
+  tx_head = next_head;
+  return 1;
 }
 
-uint8_t uart_tx_busy(void)
-{
-    return tx_busy;
+uint8_t uart_transfer(const char *str) {
+  if (str == 0) {
+    return 0;
+  }
+
+  // Contar longitud de la cadena
+  uint8_t len = 0;
+  while (str[len] != '\0') {
+    len++;
+  }
+
+  // Calcular espacio disponible en el buffer TX
+  uint8_t used = (tx_head - tx_tail) & (UART_TX_BUF_SIZE - 1);
+  uint8_t free_space = (UART_TX_BUF_SIZE - 1) - used;
+
+  if (len > free_space) {
+    return 0; // No cabe toda la cadena
+  }
+
+  // Encolar caracteres
+  for (uint8_t i = 0; i < len; i++) {
+    uart_send_char(str[i]);
+  }
+
+  // Activar transmisión por interrupción
+  uart_tx_interrupt_enable();
+  return 1;
 }
 
-uint8_t uart_rx_available(void)
-{
-    return (uint8_t)((rx_head - rx_tail + UART_RX_BUF_SIZE) % UART_RX_BUF_SIZE);
+uint8_t uart_read(uint8_t *data) {
+  if (rx_head == rx_tail) {
+    return 0;
+  }
+
+  *data = rx_buf[rx_tail];
+  rx_tail = (rx_tail + 1) & (UART_RX_BUF_SIZE - 1);
+  return 1;
 }
 
-int16_t uart_read(void)
-{
-    uint8_t data;
-    uint8_t sreg = SREG;
+uint8_t uart_has_message(void) { return rx_msg_flag; }
 
-    cli();
-    if (!rx_pop(&data))
-    {
-        SREG = sreg;
-        return -1;
-    }
-    SREG = sreg;
+void uart_clear_message(void) { rx_msg_flag = 0; }
 
-    return (int16_t)data;
+ISR(USART_UDRE_vect) {
+  if (tx_head != tx_tail) {
+    UDR0 = tx_buf[tx_tail];
+    tx_tail = (tx_tail + 1) & (UART_TX_BUF_SIZE - 1);
+  }
+
+  // Si el buffer quedó vacío, deshabilitar interrupción
+  if (tx_head == tx_tail) {
+    uart_tx_interrupt_disable();
+  }
 }
 
-ISR(USART_UDRE_vect)
-{
-    if (tx_ptr == 0)
-    {
-        UCSR0B &= ~(1 << UDRIE0);
-        tx_busy = 0;
-        return;
-    }
+ISR(USART_RX_vect) {
+  uint8_t data = UDR0;
+  uint8_t next_head = (rx_head + 1) & (UART_RX_BUF_SIZE - 1);
 
-    if (*tx_ptr != '\0')
-    {
-        UDR0 = (uint8_t)*tx_ptr;
-        tx_ptr++;
-    }
+  if (next_head != rx_tail) {
+    rx_buf[rx_head] = data;
+    rx_head = next_head;
 
-    if (*tx_ptr == '\0')
-    {
-        UCSR0B &= ~(1 << UDRIE0);
-        tx_busy = 0;
-        tx_ptr = 0;
+    if (data == '\n') {
+      rx_msg_flag = 1;
     }
-}
-
-ISR(USART_RX_vect)
-{
-    uint8_t data = UDR0;
-    (void)rx_push(data);
+  }
 }
