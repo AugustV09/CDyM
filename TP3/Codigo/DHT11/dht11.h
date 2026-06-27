@@ -11,6 +11,7 @@ typedef struct
     uint8_t checksum;
 } dht_data_t;
 
-void dht11_read(dht_data_t *data);
+void dht11_init(void);
+dht_data_t dht11_read(void);
 
 #endif
