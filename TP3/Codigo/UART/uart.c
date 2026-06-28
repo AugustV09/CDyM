@@ -25,7 +25,8 @@ static volatile uint8_t tx_buf[UART_TX_BUF_SIZE];
 static volatile uint8_t tx_head;
 static volatile uint8_t tx_tail;
 
-void uart_init(void) {
+void uart_init(void)
+{
   rx_head = 0;
   rx_tail = 0;
   rx_msg_flag = 0;
@@ -51,10 +52,12 @@ void uart_tx_interrupt_enable(void) { UCSR0B |= (1 << UDRIE0); }
 
 void uart_tx_interrupt_disable(void) { UCSR0B &= ~(1 << UDRIE0); }
 
-uint8_t uart_send_char(uint8_t c) {
+uint8_t uart_send_char(uint8_t c)
+{
   uint8_t next_head = (tx_head + 1) & (UART_TX_BUF_SIZE - 1);
 
-  if (next_head == tx_tail) {
+  if (next_head == tx_tail)
+  {
     return 0; // Buffer lleno
   }
 
@@ -63,14 +66,17 @@ uint8_t uart_send_char(uint8_t c) {
   return 1;
 }
 
-uint8_t uart_transfer(const char *str) {
-  if (str == 0) {
+uint8_t uart_transfer(const char *str)
+{
+  if (str == 0)
+  {
     return 0;
   }
 
   // Contar longitud de la cadena
   uint8_t len = 0;
-  while (str[len] != '\0') {
+  while (str[len] != '\0')
+  {
     len++;
   }
 
@@ -78,12 +84,14 @@ uint8_t uart_transfer(const char *str) {
   uint8_t used = (tx_head - tx_tail) & (UART_TX_BUF_SIZE - 1);
   uint8_t free_space = (UART_TX_BUF_SIZE - 1) - used;
 
-  if (len > free_space) {
+  if (len > free_space)
+  {
     return 0; // No cabe toda la cadena
   }
 
   // Encolar caracteres
-  for (uint8_t i = 0; i < len; i++) {
+  for (uint8_t i = 0; i < len; i++)
+  {
     uart_send_char(str[i]);
   }
 
@@ -92,8 +100,10 @@ uint8_t uart_transfer(const char *str) {
   return 1;
 }
 
-uint8_t uart_read(uint8_t *data) {
-  if (rx_head == rx_tail) {
+uint8_t uart_read(uint8_t *data)
+{
+  if (rx_head == rx_tail)
+  {
     return 0;
   }
 
@@ -106,27 +116,33 @@ uint8_t uart_has_message(void) { return rx_msg_flag; }
 
 void uart_clear_message(void) { rx_msg_flag = 0; }
 
-ISR(USART_UDRE_vect) {
-  if (tx_head != tx_tail) {
+ISR(USART_UDRE_vect)
+{
+  if (tx_head != tx_tail)
+  {
     UDR0 = tx_buf[tx_tail];
     tx_tail = (tx_tail + 1) & (UART_TX_BUF_SIZE - 1);
   }
 
   // Si el buffer quedó vacío, deshabilitar interrupción
-  if (tx_head == tx_tail) {
+  if (tx_head == tx_tail)
+  {
     uart_tx_interrupt_disable();
   }
 }
 
-ISR(USART_RX_vect) {
+ISR(USART_RX_vect)
+{
   uint8_t data = UDR0;
   uint8_t next_head = (rx_head + 1) & (UART_RX_BUF_SIZE - 1);
 
-  if (next_head != rx_tail) {
+  if (next_head != rx_tail)
+  {
     rx_buf[rx_head] = data;
     rx_head = next_head;
 
-    if (data == '\n') {
+    if (data == '\n')
+    {
       rx_msg_flag = 1;
     }
   }
