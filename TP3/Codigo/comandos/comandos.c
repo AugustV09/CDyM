@@ -26,8 +26,8 @@ static void cmd_set_time(const char *arg)
     }
 
     rtc_time_t nuevo;
-    nuevo.horas    = (uint8_t)((arg[0] - '0') * 10u + (arg[1] - '0'));
-    nuevo.minutos  = (uint8_t)((arg[3] - '0') * 10u + (arg[4] - '0'));
+    nuevo.horas = (uint8_t)((arg[0] - '0') * 10u + (arg[1] - '0'));
+    nuevo.minutos = (uint8_t)((arg[3] - '0') * 10u + (arg[4] - '0'));
     nuevo.segundos = (uint8_t)((arg[6] - '0') * 10u + (arg[7] - '0'));
 
     if (nuevo.horas > 23u || nuevo.minutos > 59u || nuevo.segundos > 59u)
@@ -43,12 +43,16 @@ static void cmd_set_time(const char *arg)
 /** Parsea y ejecuta SET_TM=SS. */
 static void cmd_set_tm(const char *arg)
 {
-    uint8_t val   = 0u;
+    uint8_t val = 0u;
     uint8_t valido = 1u;
 
     for (uint8_t i = 0u; arg[i] != '\0'; i++)
     {
-        if (arg[i] < '0' || arg[i] > '9') { valido = 0u; break; }
+        if (arg[i] < '0' || arg[i] > '9')
+        {
+            valido = 0u;
+            break;
+        }
         val = (uint8_t)(val * 10u + (arg[i] - '0'));
     }
 
@@ -79,16 +83,15 @@ static void despachar(const char *cmd)
 
 void procesar_comando(void)
 {
-    static char    buf[CMD_BUF_SIZE];
+    static char buf[CMD_BUF_SIZE];
     static uint8_t idx = 0u;
 
     uint8_t byte;
 
     while (uart_read(&byte))
     {
-        if (byte == '\r') continue;
 
-        if (byte == '\n')
+        if (byte == '\r' || byte == '\n')
         {
             buf[idx] = '\0';
             idx = 0u;
@@ -96,7 +99,9 @@ void procesar_comando(void)
             return;
         }
 
-        if (idx < (CMD_BUF_SIZE - 1u)) buf[idx++] = (char)byte;
-        else                            idx = 0u;   /* overflow: descartar */
+        if (idx < (CMD_BUF_SIZE - 1u))
+            buf[idx++] = (char)byte;
+        else
+            idx = 0u; /* overflow: descartar */
     }
 }

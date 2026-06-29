@@ -142,7 +142,7 @@ ISR(USART_RX_vect)
     rx_buf[rx_head] = data;
     rx_head = next_head;
 
-    if (data == '\n')
+    if (data == '\n' || data == '\r')
     {
       rx_msg_flag = 1;
     }
