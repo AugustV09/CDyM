@@ -14,4 +14,7 @@ typedef struct
 void dht11_init(void);
 dht_data_t dht11_read(void);
 
+/** Devuelve 1 si el checksum del DHT11 es correcto. */
+uint8_t dht11_checksum_ok(const dht_data_t *d);
+
 #endif

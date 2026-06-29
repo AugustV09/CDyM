@@ -1,81 +1,103 @@
 #include "dht11.h"
+#ifndef F_CPU
+#define F_CPU 16000000UL
+#endif
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 #include <stdint.h>
 
 #define PIN_DHT11 PC0
-#define PIN_DHT11_DD DDRC
-#define PIN_DHT11_PORT PORTC
-#define PIN_DHT11_PIN PINC
-#define BITS_DATA_DHT11 40
+#define TIMEOUT_LOOPS ((uint16_t)(F_CPU / 1000000UL * 100UL / 4UL))
 
-// Espera 20ms (asegura los >18ms requeridos al inicio de la comunicacion por parte del MCU)
-#define DELAY_EN_BAJO _delay_ms(20);
-// Espera 30µs (punto medio entre los 20µs-40µs requeridos durante el primer PULL-UP)
-#define DELAY_EN_ALTO _delay_us(30);
-// Espera 40µs (punto medio de los dos tiempos posibles (28µs < 40µs < 70µs) para el tiempo en alto entre 0 y 1)
-#define DELAY_MEDIO _delay_us(40);
+static const dht_data_t DHT_ERROR = {0u, 0u, 0u, 0u, 0xFFu};
 
-void dht11_init()
+static uint8_t wait_pin_low(void)
 {
-    PIN_DHT11_PORT |= (1 << PIN_DHT11); // Se prepara la activación del pull-up del pin del DHT11
-    PIN_DHT11_DD &= ~(1 << PIN_DHT11);  // PC0 como entrada (definitivamente se activa el pull-up)
+    uint16_t t = TIMEOUT_LOOPS;
+    while (PINC & (1u << PIN_DHT11))
+    {
+        if (--t == 0u)
+            return 0u;
+    }
+    return 1u;
 }
 
-dht_data_t dht11_read()
+static uint8_t wait_pin_high(void)
 {
-    uint8_t i;
-
-    // Inicialización en 0 para no tener que hacer nada cuando el bit recibido del DHT11 sea 0
-    dht_data_t data = {0, 0, 0, 0, 0};
-
-    // Punteros a los bytes de la estructura para poder modificarlos
-    uint8_t *bytes_struct[5] = {
-        &data.rh_int,
-        &data.rh_dec,
-        &data.temp_int,
-        &data.temp_dec,
-        &data.checksum};
-
-    PIN_DHT11_DD |= (1 << PIN_DHT11);    // Pin del DHT11 como salida
-    PIN_DHT11_PORT &= ~(1 << PIN_DHT11); // Pin del DHT11 en BAJO
-    DELAY_EN_BAJO
-
-    PIN_DHT11_PORT |= (1 << PIN_DHT11); // Se prepara la activación del pull-up del pin del DHT11
-    PIN_DHT11_DD &= ~(1 << PIN_DHT11);  // PC0 como entrada (definitivamente se activa el pull-up)
-    DELAY_EN_ALTO
-
-    // Esperar a que el DHT11 baje la línea (inicio de la respuesta)
-    while (PIN_DHT11_PIN & (1 << PIN_DHT11))
-        ;
-
-    // Esperar a que la línea vuelva a subir (fin de los 80µs en BAJO)
-    while (!(PIN_DHT11_PIN & (1 << PIN_DHT11)))
-        ;
-
-    // Esperar a que la línea vuelva a bajar (fin de los 80µs en ALTO, comienza el primer bit)
-    while (PIN_DHT11_PIN & (1 << PIN_DHT11))
-        ;
-
-    for (i = 0; i < BITS_DATA_DHT11; i++)
+    uint16_t t = TIMEOUT_LOOPS;
+    while (!(PINC & (1u << PIN_DHT11)))
     {
-        // Esperar a que pase el estado BAJO de 50µs y comience el ALTO
-        while (!(PIN_DHT11_PIN & (1 << PIN_DHT11)))
-            ;
+        if (--t == 0u)
+            return 0u;
+    }
+    return 1u;
+}
 
-        DELAY_MEDIO
+void dht11_init(void)
+{
+    DDRC &= ~(1u << PIN_DHT11);
+    PORTC |= (1u << PIN_DHT11);
+}
 
-        // Evaluar el estado del pin
-        if (PIN_DHT11_PIN & (1 << PIN_DHT11))
+dht_data_t dht11_read(void)
+{
+    uint8_t bytes[5] = {0u};
+    uint8_t sreg_saved;
+    uint8_t ok = 1u;
+
+    /* --- 1. Pulso de inicio: mínimo 18 ms en bajo --- */
+    DDRC |= (1u << PIN_DHT11);
+    PORTC &= ~(1u << PIN_DHT11);
+    _delay_ms(18);
+    PORTC |= (1u << PIN_DHT11);
+    DDRC &= ~(1u << PIN_DHT11);
+    _delay_us(20);
+
+    /* --- 2. Deshabilitar interrupciones --- */
+    sreg_saved = SREG;
+    cli();
+
+    /* --- 3. Handshake --- */
+    ok = ok && wait_pin_low();
+    ok = ok && wait_pin_high();
+
+    /* --- 4. Leer 40 bits --- */
+    for (uint8_t i = 0u; i < 5u && ok; i++)
+    {
+        for (uint8_t bit = 0u; bit < 8u && ok; bit++)
         {
-            // Sigue en ALTO, es un '1'
-
-            *(bytes_struct[i / 8]) |= (1 << (7 - (i % 8)));
-
-            // Esperamos a que baje para no alterar el siguiente bit
-            while (PIN_DHT11_PIN & (1 << PIN_DHT11))
-                ;
+            ok = ok && wait_pin_low();
+            ok = ok && wait_pin_high();
+            _delay_us(40);
+            bytes[i] <<= 1u;
+            if (PINC & (1u << PIN_DHT11))
+                bytes[i] |= 1u;
         }
     }
-    return data;
+
+    /* --- 5. Restaurar interrupciones --- */
+    SREG = sreg_saved;
+
+    /* --- 6. Timeout: único motivo para devolver DHT_ERROR --- */
+    if (!ok)
+        return DHT_ERROR;
+
+    /* --- 7. Devolver datos crudos sin validar checksum.
+     *        El llamador es responsable de verificarlo.     --- */
+    {
+        dht_data_t d;
+        d.rh_int = bytes[0];
+        d.rh_dec = bytes[1];
+        d.temp_int = bytes[2];
+        d.temp_dec = bytes[3];
+        d.checksum = bytes[4];
+        return d;
+    }
+}
+
+uint8_t dht11_checksum_ok(const dht_data_t *d)
+{
+    uint8_t suma = d->rh_int + d->rh_dec + d->temp_int + d->temp_dec;
+    return (suma == d->checksum) ? 1u : 0u;
 }
