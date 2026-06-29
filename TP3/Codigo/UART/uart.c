@@ -8,8 +8,8 @@
 
 /** Tamaños de los buffers circulares (DEBEN ser potencias de 2 para poder usar
  * (& (SIZE - 1)) en lugar del operador módulo %) */
-#define UART_RX_BUF_SIZE 64
-#define UART_TX_BUF_SIZE 64
+#define UART_RX_BUF_SIZE 256
+#define UART_TX_BUF_SIZE 256
 
 // Valor que debe tener UBRR para que el BAUD RATE sea de ~9600 bps (a 16MHz)
 #define BAUD 103
@@ -55,62 +55,67 @@ void uart_tx_interrupt_disable(void) { UCSR0B &= ~(1 << UDRIE0); }
 
 uint8_t uart_send_char(uint8_t c)
 {
-  uint8_t next_head = (tx_head + 1) & (UART_TX_BUF_SIZE - 1);
+  uint8_t sreg = SREG;
+  cli();
 
-  if (next_head == tx_tail)
+  uint8_t next_head = (tx_head + 1) & (UART_TX_BUF_SIZE - 1);
+  uint8_t result = 0;
+
+  if (next_head != tx_tail)
   {
-    return 0; // Buffer lleno
+    tx_buf[tx_head] = c;
+    tx_head = next_head;
+    result = 1;
   }
 
-  tx_buf[tx_head] = c;
-  tx_head = next_head;
-  return 1;
+  SREG = sreg;
+  return result;
 }
 
 uint8_t uart_transfer(const char *str)
 {
   if (str == 0)
-  {
     return 0;
-  }
 
-  // Contar longitud de la cadena
   uint8_t len = 0;
   while (str[len] != '\0')
-  {
     len++;
-  }
 
-  // Calcular espacio disponible en el buffer TX
+  uint8_t sreg = SREG;
+  cli();
   uint8_t used = (tx_head - tx_tail) & (UART_TX_BUF_SIZE - 1);
+  SREG = sreg;
+
   uint8_t free_space = (UART_TX_BUF_SIZE - 1) - used;
-
   if (len > free_space)
-  {
-    return 0; // No cabe toda la cadena
-  }
+    return 0;
 
-  // Encolar caracteres
   for (uint8_t i = 0; i < len; i++)
   {
     uart_send_char(str[i]);
   }
 
-  // Activar transmisión por interrupción
   uart_tx_interrupt_enable();
   return 1;
 }
 
 uint8_t uart_read(uint8_t *data)
 {
-  if (rx_head == rx_tail)
+  uint8_t sreg = SREG;
+  cli();
+
+  uint8_t empty = (rx_head == rx_tail);
+  uint8_t result = 0;
+
+  if (!empty)
   {
-    return 0;
+    *data = rx_buf[rx_tail];
+    rx_tail = (rx_tail + 1) & (UART_RX_BUF_SIZE - 1);
+    result = 1;
   }
 
-  *data = rx_buf[rx_tail];
-  rx_tail = (rx_tail + 1) & (UART_RX_BUF_SIZE - 1);
-  return 1;
+  SREG = sreg;
+  return result;
 }
 
 uint8_t uart_has_message(void) { return rx_msg_flag; }

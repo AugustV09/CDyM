@@ -43,7 +43,6 @@ int main(void)
 
         if (uart_has_message())
         {
-            uart_clear_message();
             procesar_comando();
         }
     }

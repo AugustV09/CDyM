@@ -85,23 +85,30 @@ void procesar_comando(void)
 {
     static char buf[CMD_BUF_SIZE];
     static uint8_t idx = 0u;
-
     uint8_t byte;
 
     while (uart_read(&byte))
     {
 
-        if (byte == '\r' || byte == '\n')
+        if (byte == '\n' || byte == '\r')
         {
-            buf[idx] = '\0';
-            idx = 0u;
-            despachar(buf);
+            if (idx > 0) // evitar despachar buffer vacío
+            {
+                buf[idx] = '\0';
+                idx = 0u;
+                uart_clear_message(); // limpiar AQUÍ, justo antes de despachar
+                despachar(buf);
+            }
+            else
+            {
+                uart_clear_message(); // \n solitario: limpiar sin despachar
+            }
             return;
         }
 
         if (idx < (CMD_BUF_SIZE - 1u))
             buf[idx++] = (char)byte;
         else
-            idx = 0u; /* overflow: descartar */
+            idx = 0u;
     }
 }
