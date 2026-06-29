@@ -29,7 +29,10 @@ int main(void)
     i2c_init();
     rtc_init();
     dht11_init();
-    Timer1_Init(T_DEFAULT_SEG); /* activa sei() internamente */
+    Timer1_Init(T_DEFAULT_SEG);
+
+    /* Habilita las interrupciones globales */
+    sei();
 
     uart_transfer("Monitor de Invernadero iniciado.\r\n");
 
@@ -43,6 +46,7 @@ int main(void)
 
         if (uart_has_message())
         {
+            uart_clear_message();
             procesar_comando();
         }
     }

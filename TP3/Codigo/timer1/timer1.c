@@ -51,9 +51,6 @@ void Timer1_Init(uint8_t intervalo_seg)
 
     /* Habilita la interrupción por Compare Match A del Timer 1 (TIMER1_COMPA_vect) */
     TIMSK1 |= (1 << OCIE1A);
-
-    /* Habilita las interrupciones globales */
-    sei();
 }
 
 /**

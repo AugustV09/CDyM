@@ -49,9 +49,21 @@ void uart_init(void)
   UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
 }
 
-void uart_tx_interrupt_enable(void) { UCSR0B |= (1 << UDRIE0); }
+void uart_tx_interrupt_enable(void)
+{
+  uint8_t sreg = SREG;
+  cli();
+  UCSR0B |= (1 << UDRIE0);
+  SREG = sreg;
+}
 
-void uart_tx_interrupt_disable(void) { UCSR0B &= ~(1 << UDRIE0); }
+void uart_tx_interrupt_disable(void)
+{
+  uint8_t sreg = SREG;
+  cli();
+  UCSR0B &= ~(1 << UDRIE0);
+  SREG = sreg;
+}
 
 uint8_t uart_send_char(uint8_t c)
 {
@@ -140,6 +152,21 @@ ISR(USART_UDRE_vect)
 ISR(USART_RX_vect)
 {
   uint8_t data = UDR0;
+
+  /* --- Backspace: 0x08 (BS) o 0x7F (DEL) --- */
+  if (data == '\b' || data == 0x7F)
+  {
+    if (rx_head != rx_tail) /* hay algo en el buffer */
+    {
+      uint8_t prev = (rx_head - 1) & (UART_RX_BUF_SIZE - 1);
+      /* El \n/\r es la frontera del mensaje anterior: no se toca */
+      if (rx_buf[prev] != '\n' && rx_buf[prev] != '\r')
+        rx_head = prev;
+    }
+    return;
+  }
+
+  /* --- Recepción normal (sin cambios) --- */
   uint8_t next_head = (rx_head + 1) & (UART_RX_BUF_SIZE - 1);
 
   if (next_head != rx_tail)
