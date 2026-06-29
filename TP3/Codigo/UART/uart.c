@@ -34,6 +34,7 @@ void uart_init(void)
   tx_head = 0;
   tx_tail = 0;
 
+  UBRR0H = (BAUD >> 8);
   UBRR0L = BAUD;
 #if USE_2X
   UCSR0A |= (1 << U2X0);
