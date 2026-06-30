@@ -1,6 +1,7 @@
 /**
  * @file monitor.c
  * @brief Implementación de la lógica de monitoreo del invernadero.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "monitor.h"

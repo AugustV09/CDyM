@@ -1,6 +1,7 @@
 /**
  * @file utils.c
  * @brief Implementación de utilidades genéricas de formateo.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "utils.h"

@@ -1,5 +1,6 @@
 /**
  * @file uart.c
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "uart.h"
@@ -166,7 +167,7 @@ ISR(USART_RX_vect)
     return;
   }
 
-  /* --- Recepción normal (sin cambios) --- */
+  /* Caracteres normales */
   uint8_t next_head = (rx_head + 1) & (UART_RX_BUF_SIZE - 1);
 
   if (next_head != rx_tail)

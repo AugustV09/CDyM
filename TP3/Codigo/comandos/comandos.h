@@ -1,6 +1,7 @@
 /**
  * @file comandos.h
  * @brief Parser de comandos recibidos por UART.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Comandos soportados:
  *   SET_TIME=HH:MM:SS  ->  Actualiza la hora del RTC DS3231.

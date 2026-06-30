@@ -1,6 +1,7 @@
 /**
  * @file comandos.c
  * @brief Implementación del parser de comandos UART.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "comandos.h"

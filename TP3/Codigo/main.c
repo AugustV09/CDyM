@@ -1,6 +1,7 @@
 /**
  * @file main.c
  * @brief Monitor de Invernadero - TP3 Circuitos Digitales y Microcontroladores
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Arquitectura Background / Foreground:
  *   BACKGROUND (ISRs): TIMER1_COMPA_vect, USART_UDRE_vect, USART_RX_vect

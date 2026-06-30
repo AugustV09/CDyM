@@ -1,6 +1,7 @@
 /**
  * @file rtc_DS3231.c
  * @brief Implementación de funciones simplificadas para el RTC DS3231
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "rtc_DS3231.h"

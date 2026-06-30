@@ -1,3 +1,8 @@
+/**
+ * @file main.h
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
+ */
+
 #ifndef MAIN_H
 #define MAIN_H
 

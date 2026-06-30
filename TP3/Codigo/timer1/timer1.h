@@ -3,6 +3,7 @@
  * @brief Módulo de temporización periódica usando el Timer/Counter 1 del AVR.
  * @note Diseñado para el ATmega328P a 16MHz. Genera eventos cada T segundos
  * configurables en tiempo de ejecución (rango válido: 2 a 60 segundos).
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 #ifndef TIMER1_H
 #define TIMER1_H

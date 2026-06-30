@@ -1,6 +1,7 @@
 /**
  * @file rtc_DS3231.h
  * @brief Biblioteca para el control del tiempo (Hora, Min, Seg) en el RTC DS3231
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #ifndef RTC_DS3231_H
@@ -20,8 +21,8 @@ typedef struct
 } rtc_time_t;
 
 /**
- * @brief Inicializa la comunicación con el RTC. Setea hora basica.
- * @note Se debe inicializar el i2c antes de llamar a esta funcion.
+ * @brief Inicializa la comunicación con el RTC. Setea hora básica de arranque.
+ * @note Llamar después de i2c_init().
  */
 void rtc_init();
 

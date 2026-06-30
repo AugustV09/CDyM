@@ -1,3 +1,6 @@
+# TP3 - Monitor de Invernadero
+# Autores: Rodriguez Fausto, Octavio Tomas Isabella Valenzi
+#
 # ======================================
 # MICROCONTROLADOR
 # ======================================

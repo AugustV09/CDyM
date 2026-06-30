@@ -1,6 +1,7 @@
 /**
  * @file monitor.h
  * @brief Lógica de monitoreo del invernadero: rangos, ventana horaria y telemetría.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Rangos según Tabla del TP:
  *   Día   (07:00-18:59): Temp 20-30°C | Hum 50-70%
@@ -30,7 +31,8 @@
 
 /**
  * @brief Lee el RTC y el DHT11, formatea y envía la trama de telemetría por UART.
- * @details Trama normal:
+ *
+ * Trama normal:
  *   [HH:MM:SS] T: XX°C | H: XX% | Estado: NORMAL/ALERTA\r\n
  *
  *   Si el sensor no responde:

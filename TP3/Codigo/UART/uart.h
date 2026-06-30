@@ -2,6 +2,7 @@
  * @file uart.h
  * @brief Driver UART0 asincrónico (9600 bps, 8N1) con transmisión y recepción
  * por interrupciones y buffer circular.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #ifndef UART_H

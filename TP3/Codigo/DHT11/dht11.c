@@ -1,3 +1,9 @@
+/**
+ * @file dht11.c
+ * @brief Implementación del driver del sensor DHT11 en PC0.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
+ */
+
 #include "dht11.h"
 #ifndef F_CPU
 #define F_CPU 16000000UL
@@ -8,10 +14,16 @@
 #include <stdint.h>
 
 #define PIN_DHT11 PC0
+/** Tope de espera activa (~100 µs por iteración a 16 MHz). */
 #define TIMEOUT_LOOPS ((uint16_t)(F_CPU / 1000000UL * 100UL / 4UL))
 
 static const dht_data_t DHT_ERROR = {0u, 0u, 0u, 0u, 0xFFu};
 
+/* -------------------------------------------------------------------------
+ * Funciones privadas
+ * ---------------------------------------------------------------------- */
+
+/** Espera nivel bajo en el bus; devuelve 0 si se agota el timeout. */
 static uint8_t wait_pin_low(void)
 {
     uint16_t t = TIMEOUT_LOOPS;
@@ -23,6 +35,7 @@ static uint8_t wait_pin_low(void)
     return 1u;
 }
 
+/** Espera nivel alto en el bus; devuelve 0 si se agota el timeout. */
 static uint8_t wait_pin_high(void)
 {
     uint16_t t = TIMEOUT_LOOPS;
@@ -33,6 +46,10 @@ static uint8_t wait_pin_high(void)
     }
     return 1u;
 }
+
+/* -------------------------------------------------------------------------
+ * API pública
+ * ---------------------------------------------------------------------- */
 
 void dht11_init(void)
 {
@@ -46,7 +63,7 @@ dht_data_t dht11_read(void)
     uint8_t sreg_saved;
     uint8_t ok = 1u;
 
-    /* --- 1. Pulso de inicio: mínimo 18 ms en bajo --- */
+    /* Pulso de inicio: mínimo 18 ms en bajo, luego liberamos el bus */
     DDRC |= (1u << PIN_DHT11);
     PORTC &= ~(1u << PIN_DHT11);
     _delay_ms(18);
@@ -54,15 +71,15 @@ dht_data_t dht11_read(void)
     DDRC &= ~(1u << PIN_DHT11);
     _delay_us(20);
 
-    /* --- 2. Deshabilitar interrupciones --- */
+    /* La lectura de bits es sensible al timing: deshabilitamos interrupciones */
     sreg_saved = SREG;
     cli();
 
-    /* --- 3. Handshake --- */
+    /* Handshake de respuesta del sensor */
     ok = ok && wait_pin_low();
     ok = ok && wait_pin_high();
 
-    /* --- 4. Leer 40 bits --- */
+    /* 5 bytes (40 bits): humedad entera/dec, temperatura entera/dec, checksum */
     for (uint8_t i = 0u; i < 5u && ok; i++)
     {
         for (uint8_t bit = 0u; bit < 8u && ok; bit++)
@@ -75,16 +92,12 @@ dht_data_t dht11_read(void)
                 bytes[i] |= 1u;
         }
     }
-
-    /* --- 5. Restaurar interrupciones --- */
+    /* Se restaura el estado anterior */
     SREG = sreg_saved;
 
-    /* --- 6. Timeout: único motivo para devolver DHT_ERROR --- */
     if (!ok)
         return DHT_ERROR;
 
-    /* --- 7. Devolver datos crudos sin validar checksum.
-     *        El llamador es responsable de verificarlo.     --- */
     {
         dht_data_t d;
         d.rh_int = bytes[0];

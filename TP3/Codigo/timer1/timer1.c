@@ -2,7 +2,7 @@
  * @file timer1.c
  * @brief Implementación del módulo de temporización periódica con Timer 1.
  * @note Basado en el Timer/Counter 1 de 16 bits del ATmega328P a 16MHz.
- * Curso: Circuitos Digitales y Microcontroladores - UNLP.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 #include "timer1.h"
 #include <avr/io.h>

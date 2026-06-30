@@ -2,7 +2,7 @@
  * @file i2c.c
  * @brief Implementación de las funciones de control para el periférico TWI (I2C).
  * @note Basado en las especificaciones del registro TWI del ATmega328P.
- * Curso: Circuitos Digitales y Microcontroladores - UNLP.
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #include "i2c.h"

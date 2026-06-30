@@ -1,6 +1,7 @@
 /**
  * @file utils.h
  * @brief Utilidades genéricas de formateo para bare metal (sin sprintf).
+ * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
 #ifndef UTILS_H
