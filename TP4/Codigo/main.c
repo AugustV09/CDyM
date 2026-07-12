@@ -1,56 +1,144 @@
 /**
  * @file main.c
- * @brief Monitor de Invernadero - TP3 Circuitos Digitales y Microcontroladores
+ * @brief TP4 – Control de LED RGB con sensor de luz, UART y PWM.
  * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Arquitectura Background / Foreground:
- *   BACKGROUND (ISRs): TIMER1_COMPA_vect, USART_UDRE_vect, USART_RX_vect
- *   FOREGROUND (loop): chequeo de banderas, sin esperas activas
+ *   BACKGROUND (ISRs):
+ *     TIMER2_COMPA_vect  → levanta tick_sw_pwm_flag (cada ~32 µs)
+ *                          + tick_fade_flag (cada ~10 ms / 313 interrupciones)
+ *     USART_UDRE_vect    → transmisión UART (buffer circular)
+ *     USART_RX_vect      → recepción UART (buffer circular)
  *
- * Módulos de aplicación:
- *   monitor/   -> lógica de rangos, ventana horaria y telemetría
- *   comandos/  -> parser UART (SET_TIME, SET_TM)
- *   utils/     -> formateo de enteros y tiempo sin sprintf
+ *   FOREGROUND (loop principal – anidamiento de flags):
+ *     - Consume tick de SW-PWM → llama a led_rgb_tick_sw_pwm()
+ *       └─ Anidado: consume tick de fade → llama a fade_tick()
+ *     - Procesa comandos UART → llama a procesar_comando()
+ *     - Muestrea el ADC → llama a adc_muestrear()  [inciso 4, TODO]
+ *
+ * Módulos del proyecto:
+ *   led_rgb/   → driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
+ *                + software PWM PB5)                             [inciso 1 ✓]
+ *   timer2/    → tick ISR a 31250 Hz con dos flags desacopladas  [inciso 1 ✓]
+ *   fade/      → máquina de estados de desvanecimiento           [inciso 3 ✓]
+ *   comandos/  → parser UART (SET_COLOR)                         [inciso 2 ✓]
+ *   UART/      → driver UART0 con buffers circulares             [reutilizado]
+ *   utils/     → formateo sin sprintf                            [reutilizado]
+ *
+ * Estado de implementación:
+ *   Inciso 1 (PWM):        ✓ completo
+ *   Inciso 2 (SET_COLOR):  ✓ completo (comandos.c parseado, led_rgb aplica)
+ *   Inciso 3 (fade):       ✓ completo (máquina de estados en fade/fade.c)
+ *   Inciso 4 (ADC→T):      TODO – implementar módulo adc/ y llamar a
+ *                                  fade_set_periodo_ms() con el valor mapeado
  */
 
 #include "main.h"
 #include "UART/uart.h"
-#include "i2c/i2c.h"
-#include "rtc_DS3231/rtc_DS3231.h"
-#include "DHT11/dht11.h"
-#include "timer1/timer1.h"
-#include "monitor/monitor.h"
 #include "comandos/comandos.h"
+#include "fade/fade.h"
+#include "led_rgb/led_rgb.h"
+#include "timer2/timer2.h"
 
-#define T_DEFAULT_SEG 5u
+/*
+ * Periodo inicial del fade en ms.
+ * Se elegirá dinámicamente por el ADC en el inciso 4;
+ * por ahora se usa el punto medio del rango (4500 ms).
+ */
+#define FADE_PERIODO_INICIAL_MS 4500u
 
-int main(void)
-{
-    uart_init();
-    i2c_init();
-    rtc_init();
-    dht11_init();
-    Timer1_Init(T_DEFAULT_SEG);
+int main(void) {
+  /* --- Inicialización de periféricos --- */
+  uart_init();
 
-    /* Habilita las interrupciones globales */
-    sei();
+  /*
+   * INCISO 1: Inicializar el driver PWM del LED RGB.
+   * led_rgb_init() configura el Timer1 en modo 1 (Phase Correct PWM 8-bit,
+   * invertido) y el pin PB5 como salida para el software PWM.
+   * Timer2_Init() arranca el tick a 31250 Hz que alimenta las flags de
+   * SW-PWM y de fade.
+   */
+  led_rgb_init();
+  Timer2_Init();
 
-    uart_transfer("Monitor de Invernadero iniciado.\r\n");
+  /*
+   * INCISO 3: Inicializar el fade con el periodo por defecto.
+   * fade_init() arranca la máquina de estados en FADE_SUBIENDO
+   * con intensidad 0 y el periodo indicado.
+   */
+  fade_init(FADE_PERIODO_INICIAL_MS);
 
-    while (1)
-    {
-        if (Timer1_HayEvento())
-        {
-            Timer1_LimpiarEvento();
-            enviar_telemetria();
-        }
+  /*
+   * INCISO 4 (TODO): Inicializar el ADC.
+   * adc_init() configurará ADC3 (PC3) con AREF interna o VCC,
+   * prescaler adecuado para 10 bits, y un timer o flag de muestreo
+   * cada 100 ms (similar al TP4 ejercicio 2a de la practica).
+   * Descomentarás esta línea cuando implementes el módulo adc/.
+   *
+   * adc_init();
+   */
 
-        if (uart_has_message())
-        {
-            uart_clear_message();
-            procesar_comando();
-        }
+  /* Habilitar interrupciones globales */
+  sei();
+
+  uart_transfer("TP4 - LED RGB iniciado.\r\n");
+  uart_transfer("Comando: SET_COLOR=R,G,B (ej: SET_COLOR=0,255,128)\r\n");
+
+  /* --- Loop principal (foreground) --- */
+  while (1) {
+    /*
+     * ANIDAMIENTO DE FLAGS (Timer2):
+     *
+     * Flag externa (TickPWM): se levanta en cada ISR del Timer2
+     * (~31250 Hz). Al consumirla, se ejecuta led_rgb_tick_sw_pwm()
+     * para avanzar el PWM por software del canal rojo (PB5).
+     *
+     * Flag interna (Tick): se levanta cada ~313 ISRs (~10 ms).
+     * Al consumirla, se ejecuta fade_tick() para avanzar la
+     * máquina de estados del fade.
+     *
+     * Este diseño desacopla el módulo Timer2 de led_rgb y fade:
+     * la ISR solo levanta flags, y el foreground decide a qué
+     * módulo llamar.
+     */
+    if (Timer2_HayTickPWM()) {
+      Timer2_LimpiarTickPWM();
+      led_rgb_tick_sw_pwm(); /* siempre al entrar a la primera flag */
+
+      if (Timer2_HayTick()) /* cada ~10 ms */
+      {
+        Timer2_LimpiarTick();
+        fade_tick(); /* avanza la máquina de estados */
+      }
     }
 
-    return 0;
+    /*
+     * INCISO 2: Procesar comando UART.
+     * Si el usuario envía "SET_COLOR=R,G,B\r\n", procesar_comando() lo parsea
+     * y llama a led_rgb_set_color(r, g, b). La intensidad actual (del fade)
+     * se aplica automáticamente gracias a la capa color × intensidad del
+     * módulo.
+     */
+    if (uart_has_message()) {
+      uart_clear_message();
+      procesar_comando();
+    }
+
+    /*
+     * INCISO 4 (TODO): Muestrear el ADC y actualizar el periodo del fade.
+     *
+     * if (adc_hay_muestra())
+     * {
+     *     adc_limpiar_muestra();
+     *     uint16_t ldr = adc_leer();
+     *     // Mapear ldr (0-1023) al rango de periodo (6000-3000 ms):
+     *     //   más luz (ldr alto) → periodo corto (3000 ms)
+     *     //   menos luz (ldr bajo) → periodo largo (6000 ms)
+     *     uint16_t periodo_ms = 6000u - (uint16_t)((uint32_t)ldr * 3000u /
+     * 1023u); fade_set_periodo_ms(periodo_ms);
+     * }
+     */
+  }
+
+  return 0;
 }

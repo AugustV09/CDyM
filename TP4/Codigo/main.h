@@ -1,5 +1,6 @@
 /**
  * @file main.h
+ * @brief Definiciones globales del TP4 – Control de LED RGB con ADC y UART.
  * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
@@ -9,31 +10,27 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-// Frecuencia del reloj para util/delay (y para calcular los baudios de la UART)
+/* Frecuencia del reloj del MCU */
 #define F_CPU 16000000UL
 #include <util/delay.h>
 
 /*
- *   Configuraciones de los pines del microcontrolador.
+ * Mapa de pines del ATmega328P para el TP4
+ * =========================================
+ * PB1 = OC1A = canal AZUL  del LED RGB (Timer1, PWM hardware)
+ * PB2 = OC1B = canal VERDE del LED RGB (Timer1, PWM hardware)
+ * PB5 = canal ROJO del LED RGB (PWM por software, Timer2)
+ *
+ * PC3 = ADC3 = entrada del sensor LDR (divisor de tensión con 100k a GND)
+ *
+ * PD0 = RXD0 (UART)
+ * PD1 = TXD0 (UART)
  */
-// Conexiones UART (Mapeo por hardware del ATmega328P)
-#define PIN_RX_UART PD0
-#define PIN_TX_UART PD1
-
-// Conexión del sensor DHT11 (Bus de datos único)
-#define PIN_DHT11 PC0
-
-// Conexiones I2C para el RTC DS3231 (Mapeo por hardware TWI)
-#define PIN_SDA_I2C PC4
-#define PIN_SCL_I2C PC5
-
-/*
- * Valores para la configuracion del proyecto
- */
-
-// Configura el valor del Bit Rate Register (TWBR) para 100 kHz
-// Fórmula teórica: SCL = F_CPU / (16 + 2 * TWBR * Prescaler)
-// Para F_CPU = 16 MHz y SCL = 100 kHz -> TWBR = 72
-#define VALOR_TWBR 72
+#define PIN_LED_B    PB1   /* OC1A – azul,  Timer1 */
+#define PIN_LED_G    PB2   /* OC1B – verde, Timer1 */
+#define PIN_LED_R    PB5   /* software PWM – rojo */
+#define PIN_LDR      PC3   /* ADC3 – sensor de luz */
+#define PIN_RX_UART  PD0
+#define PIN_TX_UART  PD1
 
 #endif /* MAIN_H */
