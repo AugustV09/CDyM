@@ -14,7 +14,8 @@
  *     - Consume tick de SW-PWM → llama a led_rgb_tick_sw_pwm()
  *       └─ Anidado: consume tick de fade → llama a fade_tick()
  *     - Procesa comandos UART → llama a procesar_comando()
- *     - Muestrea el ADC → llama a adc_muestrear()  [inciso 4, TODO]
+ *     - Muestrea el ADC → adc_tick() dispara conversión c/100ms,
+ *       adc_hay_muestra()/adc_leer() consumen el resultado  [inciso 4 ✓]
  *
  * Módulos del proyecto:
  *   led_rgb/   → driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
@@ -22,6 +23,7 @@
  *   timer2/    → tick ISR a 31250 Hz con dos flags desacopladas  [inciso 1 ✓]
  *   fade/      → máquina de estados de desvanecimiento           [inciso 3 ✓]
  *   comandos/  → parser UART (SET_COLOR)                         [inciso 2 ✓]
+ *   adc/       → muestreo del LDR (ADC3) y mapeo a periodo T     [inciso 4 ✓]
  *   UART/      → driver UART0 con buffers circulares             [reutilizado]
  *   utils/     → formateo sin sprintf                            [reutilizado]
  *
@@ -29,12 +31,13 @@
  *   Inciso 1 (PWM):        ✓ completo
  *   Inciso 2 (SET_COLOR):  ✓ completo (comandos.c parseado, led_rgb aplica)
  *   Inciso 3 (fade):       ✓ completo (máquina de estados en fade/fade.c)
- *   Inciso 4 (ADC→T):      TODO – implementar módulo adc/ y llamar a
- *                                  fade_set_periodo_ms() con el valor mapeado
+ *   Inciso 4 (ADC→T):      ✓ completo (adc/adc.c muestrea cada 100 ms y
+ *                                  llama a fade_set_periodo_ms())
  */
 
 #include "main.h"
 #include "UART/uart.h"
+#include "adc/adc.h"
 #include "comandos/comandos.h"
 #include "fade/fade.h"
 #include "led_rgb/led_rgb.h"
@@ -47,7 +50,8 @@
  */
 #define FADE_PERIODO_INICIAL_MS 4500u
 
-int main(void) {
+int main(void)
+{
   /* --- Inicialización de periféricos --- */
   uart_init();
 
@@ -69,14 +73,14 @@ int main(void) {
   fade_init(FADE_PERIODO_INICIAL_MS);
 
   /*
-   * INCISO 4 (TODO): Inicializar el ADC.
-   * adc_init() configurará ADC3 (PC3) con AREF interna o VCC,
-   * prescaler adecuado para 10 bits, y un timer o flag de muestreo
-   * cada 100 ms (similar al TP4 ejercicio 2a de la practica).
-   * Descomentarás esta línea cuando implementes el módulo adc/.
-   *
-   * adc_init();
+   * INCISO 4: Inicializar el ADC.
+   * adc_init() configura ADC3 (PC3, sensor LDR) con referencia AVCC,
+   * prescaler 128 (10 bits) y habilita la interrupción de fin de
+   * conversión. El muestreo periódico (~100 ms) lo controla adc_tick(),
+   * llamado desde el loop principal en cada tick de SW-PWM del Timer2
+   * (ver adc/adc.h para el detalle del mecanismo).
    */
+  adc_init();
 
   /* Habilitar interrupciones globales */
   sei();
@@ -85,7 +89,8 @@ int main(void) {
   uart_transfer("Comando: SET_COLOR=R,G,B (ej: SET_COLOR=0,255,128)\r\n");
 
   /* --- Loop principal (foreground) --- */
-  while (1) {
+  while (1)
+  {
     /*
      * ANIDAMIENTO DE FLAGS (Timer2):
      *
@@ -101,9 +106,17 @@ int main(void) {
      * la ISR solo levanta flags, y el foreground decide a qué
      * módulo llamar.
      */
-    if (Timer2_HayTickPWM()) {
+    if (Timer2_HayTickPWM())
+    {
       Timer2_LimpiarTickPWM();
       led_rgb_tick_sw_pwm(); /* siempre al entrar a la primera flag */
+
+      /*
+       * INCISO 4: cuenta ticks de SW-PWM y dispara una conversión ADC
+       * cada ~100 ms (ver adc/adc.c). Se anida en el mismo nivel que
+       * fade_tick(), ya que ambos dependen del tick de SW-PWM del Timer2.
+       */
+      adc_tick();
 
       if (Timer2_HayTick()) /* cada ~10 ms */
       {
@@ -119,25 +132,28 @@ int main(void) {
      * se aplica automáticamente gracias a la capa color × intensidad del
      * módulo.
      */
-    if (uart_has_message()) {
+    if (uart_has_message())
+    {
       uart_clear_message();
       procesar_comando();
     }
 
     /*
-     * INCISO 4 (TODO): Muestrear el ADC y actualizar el periodo del fade.
-     *
-     * if (adc_hay_muestra())
-     * {
-     *     adc_limpiar_muestra();
-     *     uint16_t ldr = adc_leer();
-     *     // Mapear ldr (0-1023) al rango de periodo (6000-3000 ms):
-     *     //   más luz (ldr alto) → periodo corto (3000 ms)
-     *     //   menos luz (ldr bajo) → periodo largo (6000 ms)
-     *     uint16_t periodo_ms = 6000u - (uint16_t)((uint32_t)ldr * 3000u /
-     * 1023u); fade_set_periodo_ms(periodo_ms);
-     * }
+     * INCISO 4: Muestrear el ADC y actualizar el periodo del fade.
+     * adc_tick() (llamado más arriba) dispara una conversión cada ~100 ms;
+     * acá se consume el resultado apenas la ISR ADC_vect lo deja listo.
      */
+    if (adc_hay_muestra())
+    {
+      adc_limpiar_muestra();
+      uint16_t ldr = adc_leer();
+
+      /* Mapea la lectura (0-1023) al rango de periodo pedido (3000-6000 ms):
+       *   más luz (ldr alto)   → periodo corto (3000 ms)
+       *   menos luz (ldr bajo) → periodo largo (6000 ms) */
+      uint16_t periodo_ms = adc_mapear_periodo(ldr);
+      fade_set_periodo_ms(periodo_ms);
+    }
   }
 
   return 0;
