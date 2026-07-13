@@ -5,14 +5,16 @@
  *
  * Arquitectura Background / Foreground:
  *   BACKGROUND (ISRs):
- *     TIMER2_COMPA_vect  → levanta tick_sw_pwm_flag (cada ~32 µs)
+ *     TIMER2_COMPA_vect  → acumula tick_sw_pwm_count (cada ~32 µs, sin
+ *                          perder ticks si el foreground se demora)
  *                          + tick_fade_flag (cada ~10 ms / 313 interrupciones)
  *     USART_UDRE_vect    → transmisión UART (buffer circular)
  *     USART_RX_vect      → recepción UART (buffer circular)
  *
- *   FOREGROUND (loop principal – anidamiento de flags):
- *     - Consume tick de SW-PWM → llama a led_rgb_tick_sw_pwm()
- *       └─ Anidado: consume tick de fade → llama a fade_tick()
+ *   FOREGROUND (loop principal):
+ *     - Drena TODOS los ticks de SW-PWM pendientes (while) →
+ *       led_rgb_tick_sw_pwm() + adc_tick() por cada uno
+ *     - Consume tick de fade (~10 ms) → llama a fade_tick()
  *     - Procesa comandos UART → llama a procesar_comando()
  *     - Muestrea el ADC → adc_tick() dispara conversión c/100ms,
  *       adc_hay_muestra()/adc_leer() consumen el resultado  [inciso 4 ✓]
@@ -20,7 +22,8 @@
  * Módulos del proyecto:
  *   led_rgb/   → driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
  *                + software PWM PB5)                             [inciso 1 ✓]
- *   timer2/    → tick ISR a 31250 Hz con dos flags desacopladas  [inciso 1 ✓]
+ *   timer2/    → tick ISR a 31250 Hz: contador de SW-PWM (sin pérdida)
+ *                + flag de fade (~10 ms)                          [inciso 1 ✓]
  *   fade/      → máquina de estados de desvanecimiento           [inciso 3 ✓]
  *   comandos/  → parser UART (SET_COLOR)                         [inciso 2 ✓]
  *   adc/       → muestreo del LDR (ADC3) y mapeo a periodo T     [inciso 4 ✓]
@@ -92,37 +95,37 @@ int main(void)
   while (1)
   {
     /*
-     * ANIDAMIENTO DE FLAGS (Timer2):
+     * DRENADO DE TICKS DE SW-PWM (Timer2):
      *
-     * Flag externa (TickPWM): se levanta en cada ISR del Timer2
-     * (~31250 Hz). Al consumirla, se ejecuta led_rgb_tick_sw_pwm()
-     * para avanzar el PWM por software del canal rojo (PB5).
+     * Timer2_ConsumirTickPWM() devuelve 1 y descuenta uno del contador
+     * acumulador por cada tick de SW-PWM pendiente (ver timer2.h). Se usa
+     * en un while() en lugar de un if() para no perder ticks: si el
+     * foreground tardó en volver a esta parte del loop (por ejemplo
+     * mientras procesaba un comando UART), pueden haberse acumulado
+     * varios ticks, y hay que recuperarlos todos antes de seguir, o el
+     * PWM por software y el muestreo del ADC se atrasarían respecto del
+     * tiempo real.
      *
-     * Flag interna (Tick): se levanta cada ~313 ISRs (~10 ms).
-     * Al consumirla, se ejecuta fade_tick() para avanzar la
-     * máquina de estados del fade.
+     * Dentro del while:
+     *   - led_rgb_tick_sw_pwm() avanza el PWM por software del canal
+     *     rojo (PB5), una vez por cada tick de Timer2 (~31250 Hz).
+     *   - adc_tick() cuenta ticks para disparar una conversión ADC cada
+     *     ~100 ms (ver adc/adc.c).
      *
-     * Este diseño desacopla el módulo Timer2 de led_rgb y fade:
-     * la ISR solo levanta flags, y el foreground decide a qué
-     * módulo llamar.
+     * La flag de fade (Timer2_HayTick()) se sigue consultando por
+     * separado, ya que corre a menor frecuencia (~10 ms) y no necesita
+     * el mismo mecanismo de recuperación de ticks perdidos.
      */
-    if (Timer2_HayTickPWM())
+    while (Timer2_ConsumirTickPWM())
     {
-      Timer2_LimpiarTickPWM();
-      led_rgb_tick_sw_pwm(); /* siempre al entrar a la primera flag */
-
-      /*
-       * INCISO 4: cuenta ticks de SW-PWM y dispara una conversión ADC
-       * cada ~100 ms (ver adc/adc.c). Se anida en el mismo nivel que
-       * fade_tick(), ya que ambos dependen del tick de SW-PWM del Timer2.
-       */
+      led_rgb_tick_sw_pwm();
       adc_tick();
+    }
 
-      if (Timer2_HayTick()) /* cada ~10 ms */
-      {
-        Timer2_LimpiarTick();
-        fade_tick(); /* avanza la máquina de estados */
-      }
+    if (Timer2_HayTick()) /* cada ~10 ms */
+    {
+      Timer2_LimpiarTick();
+      fade_tick(); /* avanza la máquina de estados */
     }
 
     /*

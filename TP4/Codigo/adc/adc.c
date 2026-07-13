@@ -32,6 +32,22 @@
  */
 #define TICKS_POR_MUESTREO 3125u
 
+/*
+ * ⚠ VERIFICAR CONTRA EL ESQUEMÁTICO REAL ANTES DE LA DEMO (ver adc.h) ⚠
+ *
+ * Sentido asumido por defecto (ADC_LDR_INVERTIDO = 0):
+ *   LDR conectado entre AVCC y el nodo de PC3, con la resistencia de 100k
+ *   entre ese nodo y GND. Más luz → menos R_LDR → nodo hacia PC3 sube de
+ *   tensión → lectura ADC más alta → periodo de fade más corto.
+ *
+ * Si el divisor está armado al revés en el esquemático (100k entre AVCC
+ * y PC3, LDR entre PC3 y GND), cambiar esta macro a 1: más luz seguiría
+ * dando menos R_LDR, pero ahora el nodo hacia PC3 BAJA de tensión, así
+ * que hay que invertir el sentido de adc_mapear_periodo() sin tocar el
+ * resto del módulo.
+ */
+#define ADC_LDR_INVERTIDO 0
+
 /* =========================================================================
  * Estado interno
  * ====================================================================== */
@@ -105,17 +121,29 @@ uint16_t adc_leer(void) { return adc_valor; }
 uint16_t adc_mapear_periodo(uint16_t muestra_adc)
 {
     /*
-     * Relación lineal e inversa entre luz y periodo:
-     *   muestra_adc = 0    (mínima luz)      → periodo = 6000 ms
-     *   muestra_adc = 1023 (máxima luz)      → periodo = 3000 ms
+     * Relación lineal entre luz y periodo, con el sentido controlado por
+     * ADC_LDR_INVERTIDO (ver comentario junto a esa macro y en adc.h):
      *
-     * periodo = 6000 - (muestra_adc * 3000) / 1023
+     *   ADC_LDR_INVERTIDO = 0 (default):
+     *     muestra_adc = 0    (mínima luz) → periodo = 6000 ms
+     *     muestra_adc = 1023 (máxima luz) → periodo = 3000 ms
+     *     periodo = 6000 - (muestra_adc * 3000) / 1023
+     *
+     *   ADC_LDR_INVERTIDO = 1 (divisor armado al revés):
+     *     muestra_adc = 0    (máxima luz) → periodo = 3000 ms
+     *     muestra_adc = 1023 (mínima luz) → periodo = 6000 ms
+     *     periodo = 3000 + (muestra_adc * 3000) / 1023
      *
      * Se usa aritmética de 32 bits en el producto intermedio para evitar
      * desborde: 1023 × 3000 = 3.069.000, que no entra en uint16_t.
      */
-    uint16_t periodo_ms =
-        6000u - (uint16_t)(((uint32_t)muestra_adc * 3000u) / 1023u);
+    uint16_t delta_ms = (uint16_t)(((uint32_t)muestra_adc * 3000u) / 1023u);
+
+#if ADC_LDR_INVERTIDO
+    uint16_t periodo_ms = 3000u + delta_ms;
+#else
+    uint16_t periodo_ms = 6000u - delta_ms;
+#endif
 
     return periodo_ms;
 }

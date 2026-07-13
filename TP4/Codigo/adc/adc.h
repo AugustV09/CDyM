@@ -60,8 +60,23 @@
  *     ldr bajo  (poca luz)  → periodo largo (6000 ms)
  *
  *   adc_mapear_periodo() implementa esta relación inversa y lineal.
- *   Si el conexionado físico resultara invertido, basta con invertir el
- *   sentido de la resta dentro de esa función.
+ *
+ *   ⚠ VERIFICAR CONTRA EL ESQUEMÁTICO REAL ANTES DE LA DEMO ⚠
+ *   Este sentido depende de CÓMO ESTÉ ARMADO el divisor en Proteus / en
+ *   el kit físico, no es algo que el software pueda saber por sí solo:
+ *     - Si el LDR va del lado de AVCC y la resistencia de 100k del lado
+ *       de GND (LDR arriba): más luz → menos R_LDR → el nodo intermedio
+ *       (hacia PC3) sube de tensión → lectura ADC más alta.
+ *       Este es el caso asumido por adc_mapear_periodo() tal como está.
+ *     - Si está armado al revés (100k arriba, LDR abajo, hacia GND): más
+ *       luz → menos R_LDR → el nodo intermedio BAJA de tensión → lectura
+ *       ADC más baja. En ese caso el mapeo queda invertido y hay que
+ *       invertir el sentido de la resta en adc_mapear_periodo().
+ *   Para verificarlo en la práctica: iluminar el LDR con una linterna y
+ *   observar con el debugger de Proteus (o imprimiendo adc_leer() por
+ *   UART) si la lectura sube o baja. Si el fade se acelera con MENOS
+ *   luz en vez de con más, el cableado está invertido respecto de lo
+ *   asumido acá.
  */
 
 #ifndef ADC_H
@@ -135,8 +150,10 @@ uint16_t adc_leer(void);
  * @brief Mapea una lectura de ADC (0–1023) al rango de periodo de fade
  *   pedido por el enunciado (3000 ms a 6000 ms).
  * @param muestra_adc  Valor crudo del ADC3 (0–1023).
- * @return Periodo en ms: 6000 ms para muestra_adc=0 (mínima luz) y
- *   3000 ms para muestra_adc=1023 (máxima iluminación), lineal entre medio.
+ * @return Periodo en ms, lineal entre 3000 y 6000 ms según el sentido
+ *   configurado por la macro ADC_LDR_INVERTIDO en adc.c (ver comentario
+ *   junto a esa macro, y la nota de verificación de cableado más arriba
+ *   en este archivo).
  * @note El valor devuelto puede pasarse directamente a fade_set_periodo_ms(),
  *   que además satura el rango por las dudas.
  */

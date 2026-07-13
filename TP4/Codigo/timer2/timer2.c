@@ -38,19 +38,33 @@
 static volatile uint16_t contador_fade = TICKS_POR_FADE_MS;
 
 /**
- * Bandera de tick de SW-PWM.
- * Se levanta en cada interrupción del Timer2 (31250 Hz).
- * La limpia el foreground con Timer2_LimpiarTickPWM().
- * Al ser una bandera binaria (no un contador), si el foreground no la consume
- * antes de la siguiente interrupción, el tick intermedio se fusiona (se pierde
- * la cuenta exacta pero no la señal de que ocurrió al menos uno).
+ * Contador acumulador de ticks de SW-PWM pendientes.
+ * Se incrementa en cada interrupción del Timer2 (31250 Hz) y se
+ * decrementa de a uno en cada Timer2_ConsumirTickPWM() exitoso.
+ *
+ * A diferencia de una flag binaria, este contador NO pierde ticks si el
+ * foreground se demora: si mientras el main loop procesaba un comando
+ * UART ocurrieron, por ejemplo, 5 interrupciones del Timer2, el contador
+ * queda en 5 y el foreground las recupera todas la próxima vez que
+ * consulte Timer2_ConsumirTickPWM() en un while().
+ *
+ * uint8_t alcanza porque el foreground se espera a drenarlo en cada
+ * vuelta del while(1); aun en el peor caso previsible (un uart_transfer()
+ * bloqueado esperando espacio en el buffer TX, del orden de unas pocas
+ * decenas de µs) no debería acumular más de unas pocas unidades. Si se
+ * acumulara más de 255 sin ser consumido, el contador se satura en 255
+ * en lugar de desbordar (ver ISR más abajo), perdiendo el excedente en
+ * vez de reiniciar en 0 silenciosamente.
  */
-static volatile uint8_t tick_sw_pwm_flag = 0u;
+static volatile uint8_t tick_sw_pwm_count = 0u;
 
 /**
  * Bandera de tick de fade (~10 ms).
  * Se levanta cada TICKS_POR_FADE_MS interrupciones del Timer2.
  * La limpia el foreground con Timer2_LimpiarTick().
+ * Sigue siendo una flag binaria (ver justificación en timer2.h): el fade
+ * es una animación visual donde perder un tick de 10 ms ocasional no se
+ * nota, así que no se justifica llevar un contador acumulador para esto.
  */
 static volatile uint8_t tick_fade_flag = 0u;
 
@@ -58,9 +72,10 @@ static volatile uint8_t tick_fade_flag = 0u;
  * API pública
  * ====================================================================== */
 
-void Timer2_Init(void) {
+void Timer2_Init(void)
+{
   contador_fade = TICKS_POR_FADE_MS;
-  tick_sw_pwm_flag = 0u;
+  tick_sw_pwm_count = 0u;
   tick_fade_flag = 0u;
 
   TCNT2 = 0u;
@@ -81,8 +96,25 @@ void Timer2_Init(void) {
   TIMSK2 |= (1u << OCIE2A);
 }
 
-uint8_t Timer2_HayTickPWM(void) { return tick_sw_pwm_flag; }
-void Timer2_LimpiarTickPWM(void) { tick_sw_pwm_flag = 0u; }
+uint8_t Timer2_ConsumirTickPWM(void)
+{
+  /*
+   * Sección crítica: tick_sw_pwm_count también se modifica desde la ISR
+   * del Timer2, así que la lectura-y-decremento debe ser atómica para
+   * evitar perder un incremento concurrente (read-modify-write no es
+   * atómico de por sí en AVR para variables de 8 bits accedidas desde
+   * ISR y foreground a la vez).
+   */
+  uint8_t sreg = SREG;
+  cli();
+
+  uint8_t hay_tick = (tick_sw_pwm_count > 0u);
+  if (hay_tick)
+    tick_sw_pwm_count--;
+
+  SREG = sreg;
+  return hay_tick;
+}
 
 uint8_t Timer2_HayTick(void) { return tick_fade_flag; }
 void Timer2_LimpiarTick(void) { tick_fade_flag = 0u; }
@@ -91,26 +123,27 @@ void Timer2_LimpiarTick(void) { tick_fade_flag = 0u; }
  * ISR del Timer2 – se ejecuta a 31250 Hz (cada 32 µs)
  * ====================================================================== */
 
-ISR(TIMER2_COMPA_vect) {
+ISR(TIMER2_COMPA_vect)
+{
   /*
-   * ROL 1 – Señalizar tick de SW-PWM.
+   * ROL 1 – Acumular un tick de SW-PWM pendiente.
    *
-   * En lugar de llamar directamente a led_rgb_tick_sw_pwm() (lo que
-   * acoplaría este módulo con led_rgb), levantamos una bandera que
-   * el foreground consume en el siguiente ciclo del main loop.
-   *
-   * Consecuencia: si el main loop está ocupado (por ej. procesando
-   * un comando UART), el SW-PWM puede perder ticks intermedios.
-   * En una aplicación visual esto es aceptable; si se necesitara
-   * precisión estricta, habría que mover la llamada de vuelta a la ISR.
+   * En lugar de levantar una flag binaria (que fusionaría ticks perdidos
+   * si el foreground no llega a tiempo), se incrementa un contador que
+   * el foreground drena por completo en cada vuelta del while(1) mediante
+   * Timer2_ConsumirTickPWM(). Saturado en 255 en vez de desbordar a 0,
+   * para no perder silenciosamente la señal de que hay ticks pendientes
+   * en el escenario (muy improbable) de que se acumulen más de 255.
    */
-  tick_sw_pwm_flag = 1u;
+  if (tick_sw_pwm_count < 255u)
+    tick_sw_pwm_count++;
 
   /*
    * ROL 2 – Generar el tick de fade cada ~10 ms.
    * Contador de 16 bits porque 313 > 255.
    */
-  if (--contador_fade == 0u) {
+  if (--contador_fade == 0u)
+  {
     contador_fade = TICKS_POR_FADE_MS;
     tick_fade_flag = 1u;
   }
