@@ -4,7 +4,7 @@
 MCU        = atmega328p
 F_CPU      = 16000000UL
 PROGRAMMER = arduino
-PORT       = /dev/ttyACM0
+PORT       = /dev/ttyUSB0
 BAUD       = 115200
 
 # ======================================
