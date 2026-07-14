@@ -47,29 +47,29 @@
  *   }
  *
  * ============================================================================
- * MAPEO LDR → PERIODO DE FADE (inciso 4 del entregable)
+ * MAPEO LDR -> PERIODO DE FADE (inciso 4 del entregable)
  * ============================================================================
  *
  *   El enunciado pide que el periodo T del parpadeo varíe entre:
  *     6 s (mínima luz)   y   3 s (máxima iluminación)
  *
- *   Suponiendo que el divisor de tensión LDR–100k entrega mayor tensión
+ *   Suponiendo que el divisor de tensión LDR-100k entrega mayor tensión
  *   (mayor lectura ADC) cuanto mayor es la luz ambiente (LDR baja su
  *   resistencia con más luz, y está conectado a AVCC con la 100k a GND):
- *     ldr alto  (mucha luz) → periodo corto (3000 ms)
- *     ldr bajo  (poca luz)  → periodo largo (6000 ms)
+ *     ldr alto  (mucha luz) -> periodo corto (3000 ms)
+ *     ldr bajo  (poca luz)  -> periodo largo (6000 ms)
  *
  *   adc_mapear_periodo() implementa esta relación inversa y lineal.
  *
- *   ⚠ VERIFICAR CONTRA EL ESQUEMÁTICO REAL ANTES DE LA DEMO ⚠
+ *   [!] VERIFICAR CONTRA EL ESQUEMÁTICO REAL ANTES DE LA DEMO [!]
  *   Este sentido depende de CÓMO ESTÉ ARMADO el divisor en Proteus / en
  *   el kit físico, no es algo que el software pueda saber por sí solo:
  *     - Si el LDR va del lado de AVCC y la resistencia de 100k del lado
- *       de GND (LDR arriba): más luz → menos R_LDR → el nodo intermedio
- *       (hacia PC3) sube de tensión → lectura ADC más alta.
+ *       de GND (LDR arriba): más luz -> menos R_LDR -> el nodo intermedio
+ *       (hacia PC3) sube de tensión -> lectura ADC más alta.
  *       Este es el caso asumido por adc_mapear_periodo() tal como está.
  *     - Si está armado al revés (100k arriba, LDR abajo, hacia GND): más
- *       luz → menos R_LDR → el nodo intermedio BAJA de tensión → lectura
+ *       luz -> menos R_LDR -> el nodo intermedio BAJA de tensión -> lectura
  *       ADC más baja. En ese caso el mapeo queda invertido y hay que
  *       invertir el sentido de la resta en adc_mapear_periodo().
  *   Para verificarlo en la práctica: iluminar el LDR con una linterna y
@@ -93,8 +93,8 @@
  * @details Configura:
  *   - ADMUX:  REFS0=1 (referencia AVCC con capacitor en AREF), MUX[3:0]=0011
  *             (canal ADC3), ADLAR=0 (justificado a la derecha, 10 bits).
- *   - ADCSRA: prescaler = 128 → f_ADC = F_CPU / 128 = 125 kHz
- *             (dentro del rango recomendado de 50–200 kHz para 10 bits),
+ *   - ADCSRA: prescaler = 128 -> f_ADC = F_CPU / 128 = 125 kHz
+ *             (dentro del rango recomendado de 50-200 kHz para 10 bits),
  *             ADEN=1 (habilita el ADC), ADIE=1 (habilita interrupción por
  *             fin de conversión).
  *   No dispara ninguna conversión: la primera se inicia en el primer
@@ -137,19 +137,19 @@ uint8_t adc_hay_muestra(void);
 void adc_limpiar_muestra(void);
 
 /**
- * @brief Devuelve el último valor de 10 bits leído del ADC3 (0–1023).
+ * @brief Devuelve el último valor de 10 bits leído del ADC3 (0-1023).
  * @return Valor de la conversión, ya combinado desde ADCL/ADCH.
  */
 uint16_t adc_leer(void);
 
 /* -------------------------------------------------------------------------
- * Mapeo LDR → periodo de fade
+ * Mapeo LDR -> periodo de fade
  * ---------------------------------------------------------------------- */
 
 /**
- * @brief Mapea una lectura de ADC (0–1023) al rango de periodo de fade
+ * @brief Mapea una lectura de ADC (0-1023) al rango de periodo de fade
  *   pedido por el enunciado (3000 ms a 6000 ms).
- * @param muestra_adc  Valor crudo del ADC3 (0–1023).
+ * @param muestra_adc  Valor crudo del ADC3 (0-1023).
  * @return Periodo en ms, lineal entre 3000 y 6000 ms según el sentido
  *   configurado por la macro ADC_LDR_INVERTIDO en adc.c (ver comentario
  *   junto a esa macro, y la nota de verificación de cableado más arriba

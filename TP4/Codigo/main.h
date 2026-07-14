@@ -1,6 +1,6 @@
 /**
  * @file main.h
- * @brief Definiciones globales del TP4 – Control de LED RGB con ADC y UART.
+ * @brief Definiciones globales del TP4 - Control de LED RGB con ADC y UART.
  * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  */
 
@@ -26,10 +26,10 @@
  * PD0 = RXD0 (UART)
  * PD1 = TXD0 (UART)
  */
-#define PIN_LED_B PB1 /* OC1A – azul,  Timer1 */
-#define PIN_LED_G PB2 /* OC1B – verde, Timer1 */
-#define PIN_LED_R PB5 /* software PWM – rojo */
-#define PIN_LDR PC3   /* ADC3 – sensor de luz */
+#define PIN_LED_B PB1 /* OC1A - azul,  Timer1 */
+#define PIN_LED_G PB2 /* OC1B - verde, Timer1 */
+#define PIN_LED_R PB5 /* software PWM - rojo */
+#define PIN_LDR PC3   /* ADC3 - sensor de luz */
 #define PIN_RX_UART PD0
 #define PIN_TX_UART PD1
 

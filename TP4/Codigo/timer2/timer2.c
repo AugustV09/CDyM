@@ -17,16 +17,16 @@
 /*
  * Configuración del Timer2 en modo CTC (WGM21=1, WGM20=0, WGM22=0):
  *   TOP = OCR2A = 63
- *   Prescaler CS21=1 → divisor 8
- *   f_interrupción = F_CPU / (prescaler × (OCR2A + 1))
- *                  = 16.000.000 / (8 × 64) = 31.250 Hz  →  período = 32 µs
+ *   Prescaler CS21=1 -> divisor 8
+ *   f_interrupción = F_CPU / (prescaler x (OCR2A + 1))
+ *                  = 16.000.000 / (8 x 64) = 31.250 Hz  ->  período = 32 us
  */
 #define OCR2A_VAL 63u
 
 /*
  * Interrupciones del Timer2 entre dos ticks de fade consecutivos.
  * Con f_tick = 31250 Hz, para un tick de fade cada 10 ms:
- *   N = 31250 × 0.010 = 312.5 → usamos 313  (≈ 10.016 ms, error < 0.2 %)
+ *   N = 31250 x 0.010 = 312.5 -> usamos 313  (~ 10.016 ms, error < 0.2 %)
  */
 #define TICKS_POR_FADE_MS 313u
 
@@ -51,7 +51,7 @@ static volatile uint16_t contador_fade = TICKS_POR_FADE_MS;
  * uint8_t alcanza porque el foreground se espera a drenarlo en cada
  * vuelta del while(1); aun en el peor caso previsible (un uart_transfer()
  * bloqueado esperando espacio en el buffer TX, del orden de unas pocas
- * decenas de µs) no debería acumular más de unas pocas unidades. Si se
+ * decenas de us) no debería acumular más de unas pocas unidades. Si se
  * acumulara más de 255 sin ser consumido, el contador se satura en 255
  * en lugar de desbordar (ver ISR más abajo), perdiendo el excedente en
  * vez de reiniciar en 0 silenciosamente.
@@ -82,13 +82,13 @@ void Timer2_Init(void)
   OCR2A = OCR2A_VAL;
 
   /*
-   * TCCR2A: WGM21=1, WGM20=0 → modo CTC (TOP = OCR2A)
+   * TCCR2A: WGM21=1, WGM20=0 -> modo CTC (TOP = OCR2A)
    * No se usan salidas OC2A/OC2B en pines (COM2x = 0).
    */
   TCCR2A = (1u << WGM21);
 
   /*
-   * TCCR2B: WGM22=0 (modo CTC no lo requiere), CS21=1 → prescaler 8
+   * TCCR2B: WGM22=0 (modo CTC no lo requiere), CS21=1 -> prescaler 8
    */
   TCCR2B = (1u << CS21);
 
@@ -120,13 +120,13 @@ uint8_t Timer2_HayTick(void) { return tick_fade_flag; }
 void Timer2_LimpiarTick(void) { tick_fade_flag = 0u; }
 
 /* =========================================================================
- * ISR del Timer2 – se ejecuta a 31250 Hz (cada 32 µs)
+ * ISR del Timer2 - se ejecuta a 31250 Hz (cada 32 us)
  * ====================================================================== */
 
 ISR(TIMER2_COMPA_vect)
 {
   /*
-   * ROL 1 – Acumular un tick de SW-PWM pendiente.
+   * ROL 1 - Acumular un tick de SW-PWM pendiente.
    *
    * En lugar de levantar una flag binaria (que fusionaría ticks perdidos
    * si el foreground no llega a tiempo), se incrementa un contador que
@@ -139,7 +139,7 @@ ISR(TIMER2_COMPA_vect)
     tick_sw_pwm_count++;
 
   /*
-   * ROL 2 – Generar el tick de fade cada ~10 ms.
+   * ROL 2 - Generar el tick de fade cada ~10 ms.
    * Contador de 16 bits porque 313 > 255.
    */
   if (--contador_fade == 0u)

@@ -4,7 +4,7 @@
  * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Comandos soportados en TP4:
- *   SET_COLOR=R,G,B   → Fija el color del LED RGB (valores 0-255 por canal).
+ *   SET_COLOR=R,G,B   -> Fija el color del LED RGB (valores 0-255 por canal).
  *                        Ejemplo: SET_COLOR=0,255,255\r\n
  *
  */

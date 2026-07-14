@@ -87,9 +87,9 @@ static void cmd_set_color(const char *arg)
    * para el ánodo común ya está encapsulada dentro del módulo led_rgb.
    *
    * Ejemplo: SET_COLOR=0,255,255
-   *   r=0   → canal rojo apagado
-   *   g=255 → canal verde al máximo
-   *   b=255 → canal azul al máximo
+   *   r=0   -> canal rojo apagado
+   *   g=255 -> canal verde al máximo
+   *   b=255 -> canal azul al máximo
    */
   led_rgb_set_color(r, g, b);
 

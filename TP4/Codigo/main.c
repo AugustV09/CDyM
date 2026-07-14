@@ -1,40 +1,40 @@
 /**
  * @file main.c
- * @brief TP4 – Control de LED RGB con sensor de luz, UART y PWM.
+ * @brief TP4 - Control de LED RGB con sensor de luz, UART y PWM.
  * @author Rodriguez Fausto, Octavio Tomas Isabella Valenzi
  *
  * Arquitectura Background / Foreground:
  *   BACKGROUND (ISRs):
- *     TIMER2_COMPA_vect  → acumula tick_sw_pwm_count (cada ~32 µs, sin
+ *     TIMER2_COMPA_vect  -> acumula tick_sw_pwm_count (cada ~32 us, sin
  *                          perder ticks si el foreground se demora)
  *                          + tick_fade_flag (cada ~10 ms / 313 interrupciones)
- *     USART_UDRE_vect    → transmisión UART (buffer circular)
- *     USART_RX_vect      → recepción UART (buffer circular)
+ *     USART_UDRE_vect    -> transmisión UART (buffer circular)
+ *     USART_RX_vect      -> recepción UART (buffer circular)
  *
  *   FOREGROUND (loop principal):
- *     - Drena TODOS los ticks de SW-PWM pendientes (while) →
+ *     - Drena TODOS los ticks de SW-PWM pendientes (while) ->
  *       led_rgb_tick_sw_pwm() + adc_tick() por cada uno
- *     - Consume tick de fade (~10 ms) → llama a fade_tick()
- *     - Procesa comandos UART → llama a procesar_comando()
- *     - Muestrea el ADC → adc_tick() dispara conversión c/100ms,
- *       adc_hay_muestra()/adc_leer() consumen el resultado  [inciso 4 ✓]
+ *     - Consume tick de fade (~10 ms) -> llama a fade_tick()
+ *     - Procesa comandos UART -> llama a procesar_comando()
+ *     - Muestrea el ADC -> adc_tick() dispara conversión c/100ms,
+ *       adc_hay_muestra()/adc_leer() consumen el resultado  [inciso 4 OK]
  *
  * Módulos del proyecto:
- *   led_rgb/   → driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
- *                + software PWM PB5)                             [inciso 1 ✓]
- *   timer2/    → tick ISR a 31250 Hz: contador de SW-PWM (sin pérdida)
- *                + flag de fade (~10 ms)                          [inciso 1 ✓]
- *   fade/      → máquina de estados de desvanecimiento           [inciso 3 ✓]
- *   comandos/  → parser UART (SET_COLOR)                         [inciso 2 ✓]
- *   adc/       → muestreo del LDR (ADC3) y mapeo a periodo T     [inciso 4 ✓]
- *   UART/      → driver UART0 con buffers circulares             [reutilizado]
- *   utils/     → formateo sin sprintf                            [reutilizado]
+ *   led_rgb/   -> driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
+ *                + software PWM PB5)                             [inciso 1 OK]
+ *   timer2/    -> tick ISR a 31250 Hz: contador de SW-PWM (sin pérdida)
+ *                + flag de fade (~10 ms)                          [inciso 1 OK]
+ *   fade/      -> máquina de estados de desvanecimiento           [inciso 3 OK]
+ *   comandos/  -> parser UART (SET_COLOR)                         [inciso 2 OK]
+ *   adc/       -> muestreo del LDR (ADC3) y mapeo a periodo T     [inciso 4 OK]
+ *   UART/      -> driver UART0 con buffers circulares             [reutilizado]
+ *   utils/     -> formateo sin sprintf                            [reutilizado]
  *
  * Estado de implementación:
- *   Inciso 1 (PWM):        ✓ completo
- *   Inciso 2 (SET_COLOR):  ✓ completo (comandos.c parseado, led_rgb aplica)
- *   Inciso 3 (fade):       ✓ completo (máquina de estados en fade/fade.c)
- *   Inciso 4 (ADC→T):      ✓ completo (adc/adc.c muestrea cada 100 ms y
+ *   Inciso 1 (PWM):        OK completo
+ *   Inciso 2 (SET_COLOR):  OK completo (comandos.c parseado, led_rgb aplica)
+ *   Inciso 3 (fade):       OK completo (máquina de estados en fade/fade.c)
+ *   Inciso 4 (ADC->T):      OK completo (adc/adc.c muestrea cada 100 ms y
  *                                  llama a fade_set_periodo_ms())
  */
 
@@ -132,7 +132,7 @@ int main(void)
      * INCISO 2: Procesar comando UART.
      * Si el usuario envía "SET_COLOR=R,G,B\r\n", procesar_comando() lo parsea
      * y llama a led_rgb_set_color(r, g, b). La intensidad actual (del fade)
-     * se aplica automáticamente gracias a la capa color × intensidad del
+     * se aplica automáticamente gracias a la capa color x intensidad del
      * módulo.
      */
     if (uart_has_message())
@@ -152,8 +152,8 @@ int main(void)
       uint16_t ldr = adc_leer();
 
       /* Mapea la lectura (0-1023) al rango de periodo pedido (3000-6000 ms):
-       *   más luz (ldr alto)   → periodo corto (3000 ms)
-       *   menos luz (ldr bajo) → periodo largo (6000 ms) */
+       *   más luz (ldr alto)   -> periodo corto (3000 ms)
+       *   menos luz (ldr bajo) -> periodo largo (6000 ms) */
       uint16_t periodo_ms = adc_mapear_periodo(ldr);
       fade_set_periodo_ms(periodo_ms);
     }
