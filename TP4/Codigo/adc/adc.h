@@ -29,7 +29,8 @@
  *   {
  *       Timer2_LimpiarTickPWM();
  *       led_rgb_tick_sw_pwm();
- *       adc_tick();              <- cuenta ticks y dispara conversión cada 100ms
+ *       adc_tick();              <- cuenta ticks y dispara conversión cada
+ * 100ms
  *
  *       if (Timer2_HayTick())
  *       {
@@ -47,7 +48,7 @@
  *   }
  *
  * ============================================================================
- * MAPEO LDR -> PERIODO DE FADE (inciso 4 del entregable)
+ * MAPEO LDR -> PERIODO DE FADE
  * ============================================================================
  *
  *   El enunciado pide que el periodo T del parpadeo varíe entre:
@@ -61,7 +62,7 @@
  *
  *   adc_mapear_periodo() implementa esta relación inversa y lineal.
  *
- *   [!] VERIFICAR CONTRA EL ESQUEMÁTICO REAL ANTES DE LA DEMO [!]
+ *   [!] VERIFICAR CONTRA EL ESQUEMÁTICO REAL [!]
  *   Este sentido depende de CÓMO ESTÉ ARMADO el divisor en Proteus / en
  *   el kit físico, no es algo que el software pueda saber por sí solo:
  *     - Si el LDR va del lado de AVCC y la resistencia de 100k del lado

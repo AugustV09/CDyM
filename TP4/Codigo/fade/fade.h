@@ -19,16 +19,12 @@
  *   FADE_BAJANDO:   intensidad disminuye de 255 a 0 en ~1 segundo
  *   FADE_PAUSA:     intensidad en 0 durante (T - 3s) segundos
  *
- * El periodo T es modificable en tiempo de ejecución por el módulo ADC (inciso
- * 4). El rango es 3 s (máx iluminación) a 6 s (mín iluminación): la PAUSA varía
+ * El periodo T es modificable en tiempo de ejecución por el módulo ADC.
+ * El rango es 3 s (máx iluminación) a 6 s (mín iluminación): la PAUSA varía
  * entre 0 s y 3 s.
  *
  * Cada llamada a fade_tick() avanza la máquina un paso; debe llamarse desde
  * el foreground al consumir el tick del Timer2 (cada ~10 ms).
- *
- * EXTENSIBILIDAD (incisos 3 y 4):
- *   - fade_tick(): implementar en el inciso 3
- *   - fade_set_periodo_ms(): llamada desde el módulo ADC en el inciso 4
  */
 
 #ifndef FADE_H
@@ -54,7 +50,7 @@ void fade_tick(void);
 /**
  * @brief Modifica el periodo total del fade en tiempo de ejecución.
  * @param periodo_ms Nuevo periodo en ms (se acepta 3000-6000, se satura fuera
- * de rango). Llamada desde el módulo ADC en el inciso 4.
+ * de rango). Llamada desde el módulo ADC.
  */
 void fade_set_periodo_ms(uint16_t periodo_ms);
 

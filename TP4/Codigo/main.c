@@ -17,18 +17,18 @@
  *     - Consume tick de fade (~10 ms) -> llama a fade_tick()
  *     - Procesa comandos UART -> llama a procesar_comando()
  *     - Muestrea el ADC -> adc_tick() dispara conversión c/100ms,
- *       adc_hay_muestra()/adc_leer() consumen el resultado  [inciso 4 OK]
+ *       adc_hay_muestra()/adc_leer() consumen el resultado
  *
  * Módulos del proyecto:
  *   led_rgb/   -> driver PWM (Timer1 modo 1, Phase Correct 8-bit, invertido
- *                + software PWM PB5)                             [inciso 1 OK]
+ *                + software PWM PB5)
  *   timer2/    -> tick ISR a 31250 Hz: contador de SW-PWM (sin pérdida)
- *                + flag de fade (~10 ms)                          [inciso 1 OK]
- *   fade/      -> máquina de estados de desvanecimiento           [inciso 3 OK]
- *   comandos/  -> parser UART (SET_COLOR)                         [inciso 2 OK]
- *   adc/       -> muestreo del LDR (ADC3) y mapeo a periodo T     [inciso 4 OK]
- *   UART/      -> driver UART0 con buffers circulares             [reutilizado]
- *   utils/     -> formateo sin sprintf                            [reutilizado]
+ *                + flag de fade (~10 ms)
+ *   fade/      -> máquina de estados de desvanecimiento
+ *   comandos/  -> parser UART (SET_COLOR)
+ *   adc/       -> muestreo del LDR (ADC3) y mapeo a periodo T
+ *   UART/      -> driver UART0 con buffers circulares
+ *   utils/     -> formateo sin sprintf
  *
  * Estado de implementación:
  *   Inciso 1 (PWM):        OK completo
@@ -48,18 +48,17 @@
 
 /*
  * Periodo inicial del fade en ms.
- * Se elegirá dinámicamente por el ADC en el inciso 4;
+ * Se elegirá dinámicamente por el ADC;
  * por ahora se usa el punto medio del rango (4500 ms).
  */
 #define FADE_PERIODO_INICIAL_MS 4500u
 
-int main(void)
-{
+int main(void) {
   /* --- Inicialización de periféricos --- */
   uart_init();
 
   /*
-   * INCISO 1: Inicializar el driver PWM del LED RGB.
+   * Inicializar el driver PWM del LED RGB.
    * led_rgb_init() configura el Timer1 en modo 1 (Phase Correct PWM 8-bit,
    * invertido) y el pin PB5 como salida para el software PWM.
    * Timer2_Init() arranca el tick a 31250 Hz que alimenta las flags de
@@ -69,14 +68,14 @@ int main(void)
   Timer2_Init();
 
   /*
-   * INCISO 3: Inicializar el fade con el periodo por defecto.
+   * Inicializar el fade con el periodo por defecto.
    * fade_init() arranca la máquina de estados en FADE_SUBIENDO
    * con intensidad 0 y el periodo indicado.
    */
   fade_init(FADE_PERIODO_INICIAL_MS);
 
   /*
-   * INCISO 4: Inicializar el ADC.
+   * Inicializar el ADC.
    * adc_init() configura ADC3 (PC3, sensor LDR) con referencia AVCC,
    * prescaler 128 (10 bits) y habilita la interrupción de fin de
    * conversión. El muestreo periódico (~100 ms) lo controla adc_tick(),
@@ -92,8 +91,7 @@ int main(void)
   uart_transfer("Comando: SET_COLOR=R,G,B (ej: SET_COLOR=0,255,128)\r\n");
 
   /* --- Loop principal (foreground) --- */
-  while (1)
-  {
+  while (1) {
     /*
      * DRENADO DE TICKS DE SW-PWM (Timer2):
      *
@@ -116,8 +114,7 @@ int main(void)
      * separado, ya que corre a menor frecuencia (~10 ms) y no necesita
      * el mismo mecanismo de recuperación de ticks perdidos.
      */
-    while (Timer2_ConsumirTickPWM())
-    {
+    while (Timer2_ConsumirTickPWM()) {
       led_rgb_tick_sw_pwm();
       adc_tick();
     }
@@ -129,25 +126,23 @@ int main(void)
     }
 
     /*
-     * INCISO 2: Procesar comando UART.
+     * Procesar comando UART.
      * Si el usuario envía "SET_COLOR=R,G,B\r\n", procesar_comando() lo parsea
      * y llama a led_rgb_set_color(r, g, b). La intensidad actual (del fade)
      * se aplica automáticamente gracias a la capa color x intensidad del
      * módulo.
      */
-    if (uart_has_message())
-    {
+    if (uart_has_message()) {
       uart_clear_message();
       procesar_comando();
     }
 
     /*
-     * INCISO 4: Muestrear el ADC y actualizar el periodo del fade.
+     * Muestrear el ADC y actualizar el periodo del fade.
      * adc_tick() (llamado más arriba) dispara una conversión cada ~100 ms;
      * acá se consume el resultado apenas la ISR ADC_vect lo deja listo.
      */
-    if (adc_hay_muestra())
-    {
+    if (adc_hay_muestra()) {
       adc_limpiar_muestra();
       uint16_t ldr = adc_leer();
 

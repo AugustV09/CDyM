@@ -210,8 +210,3 @@ void led_rgb_tick_sw_pwm(void) {
   else
     PORTB |= (1u << PIN_R); /* HIGH -> LED apagado   */
 }
-
-uint8_t led_rgb_get_r(void) { return color_r; }
-uint8_t led_rgb_get_g(void) { return color_g; }
-uint8_t led_rgb_get_b(void) { return color_b; }
-uint8_t led_rgb_get_intensidad(void) { return intensidad; }

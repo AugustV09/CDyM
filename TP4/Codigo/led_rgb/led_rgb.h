@@ -119,20 +119,4 @@ void led_rgb_set_intensidad(uint8_t val);
  */
 void led_rgb_tick_sw_pwm(void);
 
-/* -------------------------------------------------------------------------
- * Lectura del estado actual (útil para el módulo fade/ y para debug)
- * ---------------------------------------------------------------------- */
-
-/** @brief Devuelve la componente roja del color base (0-255). */
-uint8_t led_rgb_get_r(void);
-
-/** @brief Devuelve la componente verde del color base (0-255). */
-uint8_t led_rgb_get_g(void);
-
-/** @brief Devuelve la componente azul del color base (0-255). */
-uint8_t led_rgb_get_b(void);
-
-/** @brief Devuelve la intensidad actual (0-255). */
-uint8_t led_rgb_get_intensidad(void);
-
 #endif /* LED_RGB_H */
